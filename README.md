@@ -1,23 +1,33 @@
-tThe CarboDebt program is a smart contract framework for traking  emission responsabilities associated with the consumption of hydrocarbon resources. It is not a carbon credit program, it is a debt contract that holds no explicit value. However, it does measure the responability retained by the holder with respect to the hydrocarbon resources that they produce or consume.
+The CarboDebt conract directory.
+A smart contract/ dApp framework for tracking  emission responsabilities associated with the consumption of hydrocarbon resources. 
+
+Not a carbon credit program. It is a debt contract. The pupose of the contracts are to provide a scientifically rigorous account of where emission debt is coming from and how it is being traded. 
+
+There is no explicit value attributed to the contract, however the holder may have reason to pay a fee to abate their emissions through an approved carbon sinker, such as sequestration, reforestation ...
+
+Sinkers can 'stamp' the CarboDebt to issue CarboGold, converting it into a neutral emission: an amount of carbon removed from the atmosphere based on agreements between debt participants. The value of carbon gold could reflect the marginal cost of the carbon sinker, or some perceived value that a producer/consumer may be willing to pay to receive CarboGold rather than CarboDebt, as proof of offset emissionsl
+
 
 We summarize the function of the carbo-debt contract in the 5 points below.
 
-anyone can create a carbo debt wallet to issue carbon budget attributed to production/ownership of commodity with a known energy content/intput 
-Each participant in a contract is defined by a given decentralized identifier (DiD)
- supplier (hydrocarbon producers). Usually the first creators of carbon debt
-transformer (refiners)
-distributer (trading companies, bunkers, ...) 
-consumer (can voluntarily create debt contract if not initiated further upstream)
-carbon management/removal (sequestration, reforestation, ,,,)
-managers also play the role of converting Carbon debt into carbon gold ...=
- Can request to send carbo debt to a counter-party, with the receiving parties approval (signature)
-The debt contract is transferred on sale of commodity, 
-paying manager to offload the responsability
-Contract participants can fund contract 
- pay owner to retain debt
-incentivize carbon manager to off-take the debt
-Recipients can decline to receive the deb, contract stipulates the additional charge the debt owner will charge for retaining debt 
+1.  anyone can create a carbo debt wallet to issue carbon budget attributed to production ownership of commodity with a known energy content/intput 
 
+2.  Each participant in a contract is defined by a given decentralized identifier (DiD)
+    supplier (hydrocarbon producers). Usually the first creators of carbon debt
+    consumer (can voluntarily create debt contract if not initiated further upstream)
+    carbon sinker (sequestration, reforestation, ,,,)
+
+    sinkers also play the role of converting Carbon debt into carbon gold ...
+
+3.  Can request to send/receive carbo debt from a counter-party, with the all parties approval (signature)
+
+4.  The debt contract is transferred on 
+        sale of commodity, 
+        paying sinker to offload the responsability
+
+5.  Contract participants can fund contract use by carbon manager to off-take the debt
+
+6.  Recipients can decline to receive the debt, and contract may communicate the additional charge for retaining the debt. Or sender cna offer the option to receive CarboGold in exchange for an additional fee.
 
 
 There are two strategies for implementing carbo-debt;
@@ -49,7 +59,7 @@ Trusted identity network . Legally accountable contracts.
     i. Cheating is less of an issue (trust) but must invest in oversight and complex rules to govern the issuance and expiry of DIDs and contract terms.
 
 
-Proposed Carbon credit schemes
+See below a list of proposed Carbon credit schemes (competitors?)
 
 https://medium.com/@robertgreenfieldiv/blockchain-enabled-carbon-credit-markets-1a195520f0e1
 
@@ -57,8 +67,3 @@ https://medium.com/@rzurrer/the-carbon-token-ecosystem-white-paper-a-decentraliz
 
 https://drive.google.com/file/d/1D4jmU_TQ3TnEaBhMNpM-phs1tZvRwttn/view
 
-Also, it does not aim to penalize or blame hydrocarbon or energy inyemsw industries as the problem, but provide a scientifically rigorous account of where emission debt are coming from and where they are going. In essence tracking the source to the consumer, the true source of the problem. Most if not all of these references isolate energy intense industries as the problem, whereas carbon debt is designed to work with these industries to encourage them and the final consumers of their products to track and manage their emission responsibilities more directly.
-
-We do not price this debt, however over time the network is designed to enable producers and consumers to establish a value on their debt. How much am I willing to spend to offload my debt, for example paying companies to reduce CO2 emissions, or how much as a supplier I will charge for retaining the responsibility/debt for commodities I sell to the market. 
-
-This is an inclusive system designed to work with existing energy intense industries and producers.
