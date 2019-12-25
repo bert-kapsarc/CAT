@@ -43,7 +43,9 @@ contract CarboDebtDummy {
     function incrementtx()internal{
         txcount += 1;
     }
-    
+    // Not sure we need a txhistoy. This is duplicaitng the data sent in each offerTransfer (extra gas charge), recerded by the block history
+    //  I have suggested creating separate escrow contracts that sender/receive can generate external to the debt wallet (See bellow)
+    //  Instead of a tx history simply track all escrow contracts corresponding to a given wallet, and if they ahve been closd (acecpted/rejected)
     function addtx()internal{
         incrementtx();
         txhistory[txcount].txsender = wallet[msg.sender].senderEscrow;
@@ -61,6 +63,18 @@ contract CarboDebtDummy {
     function addDebtToSelf(uint debt) public{
         wallet[msg.sender].debt += debt;
     }
+    // TO-DO create external multisig debt escrow that accepts/rejects debt rebalancing in the CarboDebt wallet
+    // 1. Avoid storing escrow data in the core wallet to avoid overloading wallet (tx fees)
+    // 2. Create separate escrow TX for each debt transfer in a separate contract. Reference only escrow contract addresses in wallet.
+    // Why? there is a security issue
+    // Imagine a wallet has received a send debt request, and they want to accept
+    // A troll sends new offerTransfer to wallet in an earlier or the same block where the wallet owner sends thwe offerAccept msg
+    // The previous escrow is overwritten, but wallet owner does not realize
+    // Transmission of the offerAccept results in the trolls unwanted debt being accepted, 
+    // Proposal
+    // Each escrow agreement should be organized in a separate multisig contract agreement
+    // Consider desigining a multisig contract that can be pre-signed by both parties off-chain, and submitted once on-chain by one party
+    // No need to record accpet/request in different blocks (this increases tx cost/latency)
     function offerTransfer(address receiver,uint debt, uint gold) public{
         wallet[receiver].senderEscrow = msg.sender;
         wallet[receiver].nameEscrow = wallet[msg.sender].name;
