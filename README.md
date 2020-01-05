@@ -1,12 +1,12 @@
-The CarboDebt conract directory.
-A smart contract/ dApp framework for tracking  emission responsabilities associated with the consumption of hydrocarbon resources. 
+# CarboDebt conract directory.
 
-Not a carbon credit program. It is a debt contract. The pupose of the contracts are to provide a scientifically rigorous account of where emission debt is coming from and how it is being traded. 
+A smart contract/ dApp for tracking  emission responsabilities associated with the consumption of hydrocarbon resources. 
 
-There is no explicit value attributed to the contract, however the holder may have reason to pay a fee to abate their emissions through an approved carbon sinker, such as sequestration, reforestation ...
+Not a carbon credit program. It is a debt contract. The pupose of the contracts are to provide a scientifically rigorous account of where emission debt is coming from and how it is being traded.
 
-Sinkers can 'stamp' the CarboDebt to issue CarboGold, converting it into a neutral emission: an amount of carbon removed from the atmosphere based on agreements between debt participants. The value of carbon gold could reflect the marginal cost of the carbon sinker, or some perceived value that a producer/consumer may be willing to pay to receive CarboGold rather than CarboDebt, as proof of offset emissionsl
+Debt holder can pay a fee to abate their emissions through an approved carbon sinker, such as sequestration, reforestation. Sinkers certify the CarboDebt to issue CarboGold, converting it into a neutral emission: an amount of carbon removed from the atmosphere based on agreements between debt participants. The value of carbon gold could reflect the marginal cost of the carbon sinker, or some perceived value that a producer/consumer may be willing to pay to receive CarboGold rather than CarboDebt, as proof of offset emissions.
 
+## Getting Started
 
 We summarize the function of the carbo-debt contract in the 5 points below.
 
@@ -28,6 +28,41 @@ We summarize the function of the carbo-debt contract in the 5 points below.
 5.  Contract participants can fund contract use by carbon manager to off-take the debt
 
 6.  Recipients can decline to receive the debt, and contract may communicate the additional charge for retaining the debt. Or sender cna offer the option to receive CarboGold in exchange for an additional fee.
+
+### Prerequisites
+* [Solidity](https://solidity.readthedocs.io/en/v0.5.3/installing-solidity.html) - Smart contract compiler
+
+```
+npm install -g solc
+```
+
+* [Truffle](https://www.trufflesuite.com/docs/truffle/getting-started/installation) - Develop
+```
+npm install -g truffle
+```
+Gnache
+NPM
+
+
+* [Gnache](https://github.com/trufflesuite/ganache-cli/blob/master/README.md) - Personal Blockchain
+
+```
+npm install -g ganache-cli
+```
+* [Or use the Gnache Gui](https://www.trufflesuite.com/docs/ganache/quickstart) - 
+
+
+### Installing
+
+Not much yet
+
+```
+chmod u+x run.sh 
+```
+```
+./run.sh
+```
+ 
 
 
 There are two strategies for implementing carbo-debt;
