@@ -1,6 +1,10 @@
 pragma solidity ^0.5.12;
 import "./MultiSigWalletFactory.sol";
 contract CarboDebtDummy {
+    /*
+     *  Events
+    */
+  event EscrowFunded (address indexed sender, uint256 indexed value);
   address owner;
   address public factory_addr;
   uint public accountCount; //number of accounts
@@ -10,10 +14,6 @@ contract CarboDebtDummy {
   uint public totalGold;   //metric for system gold
   uint public totalStamperGold; //metric for stamper gold
   mapping (address => Attributes) public wallet;
-   
-
-  //mapping (address => EscrowWallet) public escrow;
-  // mapping wallet addresses to external escrow contract (MultiSigWallet)
   mapping(address => mapping(address => address payable)) public escrow;
 
   mapping (address => StampData) public stampRegister;
@@ -37,7 +37,11 @@ contract CarboDebtDummy {
       _;
   }
   modifier escrowExists(address _sender, address _receiver){
-    require(escroWallet(_sender, _receiver)!=address(0), "No esrow wallet");
+    require(escroWallet(_sender, _receiver)!=address(0x0), "No esrow wallet");
+    _;  
+  }
+  modifier escrowDoesNotExist(address _sender, address _receiver){
+    require(escroWallet(_sender, _receiver)==address(0x0), "Escrow already initilaized");
     _;  
   }
   constructor(address factory) public {
@@ -70,6 +74,8 @@ contract CarboDebtDummy {
       uint minpmt;    //Minimum accepted payment
       uint laststamp;  //time of last stamping
   } 
+
+  function() external payable {}
     
   function signUp(string memory name) public{
       accountCount++;
@@ -82,25 +88,32 @@ contract CarboDebtDummy {
   function escroWallet(address _sender, address _receiver) 
     public 
     view
-    //onlyMember() 
     returns (address payable _escrow){
-      if(escrow[_sender ][_receiver]!=address(0)){
+      if(escrow[_sender ][_receiver]!=address(0x0)){
         _escrow = escrow[_sender][_receiver];
       }else{
         _escrow = escrow[_receiver][_sender];
       }
   }
 
-  function createEscrow(address _receiver) 
+  function createEscrow(address _receiver)//, uint _value) 
     public
+    onlyMember()
+    escrowDoesNotExist(msg.sender,_receiver)
     returns(address payable _escrow){
     uint _required = 2;
     address[] memory _owners = new address[](2);
     _owners[0]= msg.sender;
     _owners[1]=_receiver;
-    if(escrow[msg.sender][_receiver]==address(0)){
-      if(escrow[_receiver][msg.sender]==address(0)){
+    //uint256 _value = 2e18;
+    if(escrow[msg.sender][_receiver]==address(0x0)){
+      if(escrow[_receiver][msg.sender]==address(0x0)){
         _escrow = MultiSigWalletFactory(factory_addr).create(_owners, _required);
+        // send some ether to this account
+        // TODO check if there is sufficient funds
+        // How to create escrow wallet with signed deposit from sender (i.e. uint _value)?
+        //(bool success, ) = _escrow.call.value(_value)("");
+        //if(success){emit EscrowFunded(_escrow, _value);}
         escrow[msg.sender][_receiver] = _escrow;
       }
     }
@@ -129,22 +142,42 @@ contract CarboDebtDummy {
   // Each escrow agreement should be organized in a separate multisig contract agreement
   // Consider desigining a multisig contract that can be pre-signed by both parties off-chain, and submitted once on-chain by one party
   // No need to record accpet/request in different blocks (this increases tx cost/latency)
-  
+  /*
   function offerTransferDebt(address _receiver, uint _debt) 
     public
     view 
     onlyMember()
     escrowExists(msg.sender,_receiver)
     returns(bytes memory _data){ 
-    _data = abi.encodeWithSignature("offerAcceptDebt(address,address,uint)", msg.sender, _receiver, _debt);
+    _data = abi.encodeFunctionCall({
+      name: 'offerAcceptDebt',
+      inputs: [{
+          type: 'address',
+          name: '_sender'
+      },{
+          type: 'address',
+          name: '_receiver'
+      },{
+          type: 'uint',
+          name: '_debt'
+      }]
+    }, [msg.sender, _receiver, _debt]);
+    //_data = new bytes(32);
+    //assembly { mstore(add(_data, 32), 0) }
   }
-
-  function offerAcceptDebt(address _sender, address _receiver, uint debt) 
+  */
+  //TO-DO add
+  function offerAcceptDebt(address _sender, address _receiver, uint256 debt) 
     external 
+    payable
     onlyEscrow(_sender,_receiver)
     {
-      wallet[_sender].debt += int(debt);
-      wallet[_receiver].debt -= int(debt);
+      wallet[_sender].debt -= int(debt);
+      wallet[_receiver].debt += int(debt);
+      
+      // What to do if a payment is sent to this funciton
+      //send funds to _sender ??
+      //_sender.call.value(msg.value)("");
 
       //do we need to update/store these???
       if(stampRegister[_sender].isstamper == true){

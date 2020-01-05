@@ -107,7 +107,7 @@ contract MultiSigWallet {
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != address(0), 'Transaction does not exist');
+        require(transactions[transactionId].destination != address(0x0), 'Transaction does not exist');
         _;
     }
 
@@ -127,7 +127,7 @@ contract MultiSigWallet {
     }
 
     modifier notNull(address _address) {
-        require(_address != address(0), 'Address is null');
+        require(_address != address(0x0), 'Address is null');
         _;
     }
 
@@ -296,7 +296,7 @@ contract MultiSigWallet {
             let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
             let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
             result := call(
-                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                sub(gas, 347100),   // 34710 is the value that solidity is currently emitting
                                    // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
                                    // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
                 destination,
@@ -473,6 +473,10 @@ contract MultiSigWalletFactory is Factory {
 pragma solidity ^0.5.12;
 
 contract CarboDebtDummy {
+    /*
+     *  Events
+    */
+  event EscrowFunded (address indexed sender, uint256 indexed value);
   address owner;
   address public factory_addr;
   uint public accountCount; //number of accounts
@@ -482,10 +486,6 @@ contract CarboDebtDummy {
   uint public totalGold;   //metric for system gold
   uint public totalStamperGold; //metric for stamper gold
   mapping (address => Attributes) public wallet;
-   
-
-  //mapping (address => EscrowWallet) public escrow;
-  // mapping wallet addresses to external escrow contract (MultiSigWallet)
   mapping(address => mapping(address => address payable)) public escrow;
 
   mapping (address => StampData) public stampRegister;
@@ -512,6 +512,7 @@ contract CarboDebtDummy {
     require(escroWallet(_sender, _receiver)!=address(0), "No esrow wallet");
     _;  
   }
+
   constructor(address factory) public {
      owner = msg.sender;
      factory_addr = factory;
@@ -542,6 +543,8 @@ contract CarboDebtDummy {
       uint minpmt;    //Minimum accepted payment
       uint laststamp;  //time of last stamping
   } 
+
+  function() external payable {}
     
   function signUp(string memory name) public{
       accountCount++;
@@ -563,16 +566,22 @@ contract CarboDebtDummy {
       }
   }
 
-  function createEscrow(address _receiver) 
+  function createEscrow(address _receiver)//, uint _value) 
     public
     returns(address payable _escrow){
     uint _required = 2;
     address[] memory _owners = new address[](2);
     _owners[0]= msg.sender;
     _owners[1]=_receiver;
-    if(escrow[msg.sender][_receiver]==address(0)){
-      if(escrow[_receiver][msg.sender]==address(0)){
+    uint256 _value = 2e18;
+    if(escrow[msg.sender][_receiver]==address(0x0)){
+      if(escrow[_receiver][msg.sender]==address(0x0)){
         _escrow = MultiSigWalletFactory(factory_addr).create(_owners, _required);
+        // send some ether to this account
+        // TODO check if there is sufficient funds
+        // How to create escrow wallet with signed deposit from sender (i.e. uint _value)?
+        (bool success, ) = _escrow.call.value(_value)("");
+        if(success){emit EscrowFunded(_escrow, _value);}
         escrow[msg.sender][_receiver] = _escrow;
       }
     }
@@ -608,690 +617,9 @@ contract CarboDebtDummy {
     onlyMember()
     escrowExists(msg.sender,_receiver)
     returns(bytes memory _data){ 
-    _data = abi.encodeWithSignature("offerAcceptDebt(address,address,uint)", msg.sender, _receiver, _debt);
-  }
-
-  function offerAcceptDebt(address _sender, address _receiver, uint debt) 
-    external 
-    onlyEscrow(_sender,_receiver)
-    {
-      wallet[_sender].debt += int(debt);
-      wallet[_receiver].debt -= int(debt);
-
-      //do we need to update/store these???
-      if(stampRegister[_sender].isstamper == true){
-        totalStamperDebt -= debt;
-      }else if(stampRegister[_receiver].isstamper == true){
-        totalStamperDebt += debt;
-      }
-
-      /*escrow[msg.sender].debtEscrow = 0;
-      wallet[msg.sender].gold += escrow[msg.sender].goldEscrow;
-      wallet[escrow[msg.sender].senderEscrow].gold -= escrow[msg.sender].goldEscrow;
-      escrow[msg.sender].goldEscrow = 0;
-      escrow[msg.sender].senderEscrow = msg.sender;
-      escrow[msg.sender].nameEscrow = "";*/
-  }
-  /*
-   dont need this for debt transfer
-  function offerReject() public onlyMember(){
-      escrow[msg.sender].debtEscrow = 0;
-      escrow[msg.sender].goldEscrow = 0;
-      escrow[msg.sender].senderEscrow = msg.sender;
-      escrow[msg.sender].nameEscrow = "";
-  }
-  */
-  
-  function stampManager(address target, bool isstamper, uint stamprate, uint minpmt) public onlyOwner(){
-    stamperCount++;
-    stamperIndex[stamperCount]=target;
-    stampRegister[target].isstamper = isstamper;
-    stampRegister[target].stamprate = stamprate;
-    stampRegister[target].minpmt = minpmt;
-    stampRegister[target].laststamp = block.timestamp;
-  }
-  function goldUpdate() public onlyStamper(){
-    uint stamps = (block.timestamp-stampRegister[msg.sender].laststamp)/stampRegister[msg.sender].stamprate;
-    wallet[msg.sender].debt -= int(stamps); 
-    wallet[msg.sender].gold += stamps; 
-    // do we need to store these values these
-    // or only read them?
-    totalGold += stamps;
-    totalStamperGold += stamps;
-  }
-
-  function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
-    // this is too cumbersome, just update totalDeb totalGold, etc... every time a relevant transaciton is sumitted/confirmed
-    // or use this just to view current state 
-    // do we need to store these values as part of execturale (not view/pure) contract logic
-    uint totalDebtx = 0;
-    uint totalGoldx = 0;
-    uint totalStamperDebtx = 0;
-    uint totalStamperGoldx = 0;
-    for(uint i=0;i<=accountCount;i++)
-      {
-      totalDebtx += uint(wallet[accountIndex[i]].debt);
-      totalGoldx += wallet[accountIndex[i]].gold;
-      }
-    for(uint i=0;i<=stamperCount;i++)
-      {
-      totalStamperDebtx += uint(wallet[stamperIndex[i]].debt);
-      totalStamperGoldx += wallet[stamperIndex[i]].gold;
-      }
-    return (totalDebtx,totalGoldx,totalStamperDebtx,totalStamperGoldx);
-  }
-}
-
-// File: contracts/Factory.sol
-
-pragma solidity ^0.5.12;
-
-contract Factory {
-
-    /*
-     *  Events
-     */
-    event ContractInstantiation(address sender, address instantiation);
-
-    /*
-     *  Storage
-     */
-    mapping(address => bool) public isInstantiation;
-    mapping(address => address[]) public instantiations;
-
-    /*
-     * Public functions
-     */
-    /// @dev Returns number of instantiations by creator.
-    /// @param creator Contract creator.
-    /// @return Returns number of instantiations by creator.
-    function getInstantiationCount(address creator)
-        public
-        view
-        returns (uint)
-    {
-        return instantiations[creator].length;
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Registers contract in factory registry.
-    /// @param instantiation Address of contract instantiation.
-    function register(address instantiation)
-        internal
-    {
-        isInstantiation[instantiation] = true;
-        instantiations[msg.sender].push(instantiation);
-        emit ContractInstantiation(msg.sender, instantiation);
-    }
-}
-
-// File: contracts/MultiSigWallet.sol
-
-pragma solidity ^0.5.12;
-
-
-/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWallet {
-
-    /*
-     *  Events
-     */
-    event Confirmation(address indexed sender, uint indexed transactionId);
-    event Revocation(address indexed sender, uint indexed transactionId);
-    event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
-    event OwnerAddition(address indexed owner);
-    event OwnerRemoval(address indexed owner);
-    event RequirementChange(uint required);
-
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
-    mapping (uint => Transaction) public transactions;
-    mapping (uint => mapping (address => bool)) public confirmations;
-    mapping (address => bool) public isOwner;
-    address[] public owners;
-    uint public required;
-    uint public transactionCount;
-
-    struct Transaction {
-        address destination;
-        uint value;
-        bytes data;
-        bool executed;
-    }
-
-    /*
-     *  Modifiers
-     */
-    modifier onlyWallet() {
-        require(msg.sender == address(this), 'Chnages can only be made by wallet address');
-        _;
-    }
-
-    modifier ownerDoesNotExist(address owner) {
-        require(!isOwner[owner], 'Owner already assigned');
-        _;
-    }
-
-    modifier ownerExists(address owner) {
-        require(isOwner[owner], 'This address is not an owner of this wallet');
-        _;
-    }
-
-    modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != address(0), 'Transaction does not exist');
-        _;
-    }
-
-    modifier confirmed(uint transactionId, address owner) {
-        require(confirmations[transactionId][owner], 'Transaction not confirmed');
-        _;
-    }
-
-    modifier notConfirmed(uint transactionId, address owner) {
-        require(!confirmations[transactionId][owner], 'Transaction is already confirmed');
-        _;
-    }
-
-    modifier notExecuted(uint transactionId) {
-        require(!transactions[transactionId].executed, 'Transaction alreay executed');
-        _;
-    }
-
-    modifier notNull(address _address) {
-        require(_address != address(0), 'Address is null');
-        _;
-    }
-
-    modifier validRequirement(uint ownerCount, uint _required) {
-        require(ownerCount <= MAX_OWNER_COUNT
-            && _required <= ownerCount
-            && _required != 0
-            && ownerCount != 0, 'Wallet is not valid');
-        _;
-    }
-
-    /// @dev Fallback function allows to deposit ether.
-    function()
-        payable
-        external
-    {
-        if (msg.value > 0)
-          emit  Deposit(msg.sender, msg.value);
-    }
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    constructor(address[] memory _owners, uint _required)
-        public
-        validRequirement(_owners.length, _required)
-    {
-        for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != address(0));
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
-    }
-
-    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of new owner.
-    function addOwner(address owner)
-        public
-        onlyWallet
-        ownerDoesNotExist(owner)
-        notNull(owner)
-        validRequirement(owners.length + 1, required)
-    {
-        isOwner[owner] = true;
-        owners.push(owner);
-        emit OwnerAddition(owner);
-    }
-
-    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner.
-    function removeOwner(address owner)
-        public
-        onlyWallet
-        ownerExists(owner)
-    {
-        isOwner[owner] = false;
-        for (uint i=0; i<owners.length - 1; i++)
-            if (owners[i] == owner) {
-                owners[i] = owners[owners.length - 1];
-                break;
-            }
-        owners.length -= 1;
-        if (required > owners.length)
-            changeRequirement(owners.length);
-        emit OwnerRemoval(owner);
-    }
-
-    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
-    function replaceOwner(address owner, address newOwner)
-        public
-        onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (owners[i] == owner) {
-                owners[i] = newOwner;
-                break;
-            }
-        isOwner[owner] = false;
-        isOwner[newOwner] = true;
-        emit OwnerRemoval(owner);
-        emit OwnerAddition(newOwner);
-    }
-
-    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
-    /// @param _required Number of required confirmations.
-    function changeRequirement(uint _required)
-        public
-        onlyWallet
-        validRequirement(owners.length, _required)
-    {
-        required = _required;
-        emit RequirementChange(_required);
-    }
-
-    /// @dev Allows an owner to submit and confirm a transaction.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes memory data)
-        public
-        returns (uint transactionId)
-    {
-        transactionId = addTransaction(destination, value, data);
-        confirmTransaction(transactionId);
-    }
-
-    /// @dev Allows an owner to confirm a transaction.
-    /// @param transactionId Transaction ID.
-    function confirmTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        transactionExists(transactionId)
-        notConfirmed(transactionId, msg.sender)
-    {
-        confirmations[transactionId][msg.sender] = true;
-        emit Confirmation(msg.sender, transactionId);
-        executeTransaction(transactionId);
-    }
-
-    /// @dev Allows an owner to revoke a confirmation for a transaction.
-    /// @param transactionId Transaction ID.
-    function revokeConfirmation(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
-    {
-        confirmations[transactionId][msg.sender] = false;
-        emit Revocation(msg.sender, transactionId);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
-    {
-        if (isConfirmed(transactionId)) {
-            Transaction storage txn = transactions[transactionId];
-            txn.executed = true;
-            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
-                emit Execution(transactionId);
-            else {
-                emit ExecutionFailure(transactionId);
-                txn.executed = false;
-            }
-        }
-    }
-
-    // call has been separated into its own function in order to take advantage
-    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
-    function external_call(address destination, uint value, uint dataLength, bytes memory data) internal returns (bool) {
-        bool result;
-        assembly {
-            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
-            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
-            result := call(
-                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
-                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
-                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
-                destination,
-                value,
-                d,
-                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
-                x,
-                0                  // Output is ignored, therefore the output size is zero
-            )
-        }
-        return result;
-    }
-
-    /// @dev Returns the confirmation status of a transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Confirmation status.
-    function isConfirmed(uint transactionId)
-        public
-        view
-        returns (bool)
-    {
-        uint count = 0;
-        for (uint i=0; i<owners.length; i++) {
-            if (confirmations[transactionId][owners[i]])
-                count += 1;
-            if (count == required)
-                return true;
-        }
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function addTransaction(address destination, uint value, bytes memory data)
-        internal
-        notNull(destination)
-        returns (uint transactionId)
-    {
-        transactionId = transactionCount;
-        transactions[transactionId] = Transaction({
-            destination: destination,
-            value: value,
-            data: data,
-            executed: false
-        });
-        transactionCount += 1;
-        emit Submission(transactionId);
-    }
-
-    /*
-     * Web3 call functions
-     */
-    /// @dev Returns number of confirmations of a transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Number of confirmations.
-    function getConfirmationCount(uint transactionId)
-        public
-        view
-        returns (uint count)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (confirmations[transactionId][owners[i]])
-                count += 1;
-    }
-
-    /// @dev Returns total number of transactions after filers are applied.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Total number of transactions after filters are applied.
-    function getTransactionCount(bool pending, bool executed)
-        public
-        view
-        returns (uint count)
-    {
-        for (uint i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-                count += 1;
-    }
-
-    /// @dev Returns list of owners.
-    /// @return List of owner addresses.
-    function getOwners()
-        public
-        view
-        returns (address[] memory) 
-    {
-        return owners;
-    }
-
-    /// @dev Returns array with owner addresses, which confirmed transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Returns array of owner addresses.
-    function getConfirmations(uint transactionId)
-        public
-        view
-        returns (address[] memory _confirmations)
-    {
-        address[] memory confirmationsTemp = new address[](owners.length);
-        uint count = 0;
-        uint i;
-        for (i=0; i<owners.length; i++)
-            if (confirmations[transactionId][owners[i]]) {
-                confirmationsTemp[count] = owners[i];
-                count += 1;
-            }
-        _confirmations = new address[](count);
-        for (i=0; i<count; i++)
-            _confirmations[i] = confirmationsTemp[i];
-    }
-
-    /// @dev Returns list of transaction IDs in defined range.
-    /// @param from Index start position of transaction array.
-    /// @param to Index end position of transaction array.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Returns array of transaction IDs.
-    function getTransactionIds(uint from, uint to, bool pending, bool executed)
-        public
-        view
-        returns (uint[] memory _transactionIds)
-    {
-        uint[] memory transactionIdsTemp = new uint[](transactionCount);
-        uint count = 0;
-        uint i;
-        for (i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-            {
-                transactionIdsTemp[count] = i;
-                count += 1;
-            }
-        _transactionIds = new uint[](to - from);
-        for (i=from; i<to; i++)
-            _transactionIds[i - from] = transactionIdsTemp[i];
-    }
-}
-
-// File: contracts/MultiSigWalletFactory.sol
-
-pragma solidity ^0.5.12;
-
-
-
-
-/// @title Multisignature wallet factory - Allows creation of multisig wallet.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletFactory is Factory {
-
-    /*
-     * Public functions
-     */
-    /// @dev Allows verified creation of multisignature wallet.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @return Returns wallet address.
-    function create(address[] memory _owners, uint _required)
-        public
-        returns (address payable multisig_wallet)
-    {
-        MultiSigWallet escrow = new MultiSigWallet(_owners, _required);
-        multisig_wallet = address(escrow);
-        register(multisig_wallet);
-    }
-}
-
-// File: contracts/CarboDebtDummy.sol
-
-pragma solidity ^0.5.12;
-
-contract CarboDebtDummy {
-  address owner;
-  address public factory_addr;
-  uint public accountCount; //number of accounts
-  uint public stamperCount; //number of stampers
-  uint public totalDebt;   //metric for system debt this can be negative
-  uint public totalStamperDebt; //metric for stamper debt this can be non-negative
-  uint public totalGold;   //metric for system gold
-  uint public totalStamperGold; //metric for stamper gold
-  mapping (address => Attributes) public wallet;
-   
-
-  //mapping (address => EscrowWallet) public escrow;
-  // mapping wallet addresses to external escrow contract (MultiSigWallet)
-  mapping(address => mapping(address => address payable)) public escrow;
-
-  mapping (address => StampData) public stampRegister;
-  mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
-  mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
-  
-  modifier onlyOwner () {    //added some security
-      require(msg.sender == owner);
-      _;
-  }
-     modifier onlyStamper () {  //added some security
-      require(stampRegister[msg.sender].isstamper == true, "Address not approved as stamper");
-      _;
-  }
-    modifier onlyMember () {  //added some security
-      require(wallet[msg.sender].registered == true, "You are not registered");
-      _;
-  }
-    modifier onlyEscrow(address _sender, address _receiver) {  //added some security
-      require(escroWallet(_sender, _receiver) == msg.sender, "Can only call from Escrow contract");
-      _;
-  }
-  modifier escrowExists(address _sender, address _receiver){
-    require(escroWallet(_sender, _receiver)!=address(0), "No esrow wallet");
-    _;  
-  }
-  constructor(address factory) public {
-     owner = msg.sender;
-     factory_addr = factory;
-     totalGold = 0;
-     totalDebt = 0;
-     totalStamperGold = 0;
-     totalStamperDebt = 0;
-  }
-  
-  
-  struct Attributes {  //basic wallet, minimum attributes
-      bool registered; //Valid account?
-      string name;   //Text Identifier
-      int debt;      //Debt held
-      uint gold;      //Gold held
-  }
-   //split escrow into separate struct, so we can cut it out later easily
-   struct EscrowWallet {
-      address senderEscrow;//Source of transfer
-      string nameEscrow;   //Source name
-      uint debtEscrow;      //Debt offered
-      uint goldEscrow;      //Gold offered (can be positive or negative)
-  }
-   //Split Stamper management into a separate struct
-   struct StampData {
-      bool isstamper;   //Is stamper active?
-      uint stamprate; //Rate of stamping speed
-      uint minpmt;    //Minimum accepted payment
-      uint laststamp;  //time of last stamping
-  } 
-    
-  function signUp(string memory name) public{
-      accountCount++;
-      accountIndex[accountCount]=msg.sender;
-      wallet[msg.sender].name = name;
-      wallet[msg.sender].registered = true;
-
-  }
-
-  function escroWallet(address _sender, address _receiver) 
-    public 
-    view
-    //onlyMember() 
-    returns (address payable _escrow){
-      if(escrow[_sender ][_receiver]!=address(0)){
-        _escrow = escrow[_sender][_receiver];
-      }else{
-        _escrow = escrow[_receiver][_sender];
-      }
-  }
-
-  function createEscrow(address _receiver) 
-    public
-    returns(address payable _escrow){
-    uint _required = 2;
-    address[] memory _owners = new address[](2);
-    _owners[0]= msg.sender;
-    _owners[1]=_receiver;
-    if(escrow[msg.sender][_receiver]==address(0)){
-      if(escrow[_receiver][msg.sender]==address(0)){
-        _escrow = MultiSigWalletFactory(factory_addr).create(_owners, _required);
-        escrow[msg.sender][_receiver] = _escrow;
-      }
-    }
-  }
-
-  function stampPmtAdjust(uint minpmt) public onlyStamper(){
-      stampRegister[msg.sender].minpmt = minpmt;
-  }
-  function addDebtToSelf(uint debt) public onlyMember(){
-    require(debt>0);
-    wallet[msg.sender].debt += int(debt);
-    totalDebt += debt;
-    if(stampRegister[msg.sender].isstamper == true){
-      totalStamperDebt += debt;
-    }
-  }
-  // TO-DO create external multisig debt escrow that accepts/rejects debt rebalancing in the CarboDebt wallet
-  // 1. Avoid storing escrow data in the core wallet to avoid overloading wallet (tx fees)
-  // 2. Create separate escrow TX for each debt transfer in a separate contract. Reference only escrow contract addresses in wallet.
-  // Why? there is a security issue
-  // Imagine a wallet has received a send debt request, and they want to accept
-  // A troll sends new offerTransfer to wallet in an earlier or the same block where the wallet owner sends thwe offerAccept msg
-  // The previous escrow is overwritten, but wallet owner does not realize
-  // Transmission of the offerAccept results in the trolls unwanted debt being accepted, 
-  // Proposal
-  // Each escrow agreement should be organized in a separate multisig contract agreement
-  // Consider desigining a multisig contract that can be pre-signed by both parties off-chain, and submitted once on-chain by one party
-  // No need to record accpet/request in different blocks (this increases tx cost/latency)
-  
-  function offerTransferDebt(address _receiver, uint _debt) 
-    public
-    view 
-    onlyMember()
-    escrowExists(msg.sender,_receiver)
-    returns(bytes memory _data){ 
-    _data = abi.encodeWithSignature("offerAcceptDebt(address,address,uint)", msg.sender, _receiver, _debt);
+    _data = abi.encode("offerAcceptDebt(address,address,uint)", msg.sender, _receiver, _debt);
+    //_data = new bytes(32);
+    //assembly { mstore(add(_data, 32), 0) }
   }
 
   function offerAcceptDebt(address _sender, address _receiver, uint debt) 

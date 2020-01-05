@@ -59,7 +59,7 @@ contract MultiSigWallet {
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != address(0), 'Transaction does not exist');
+        require(transactions[transactionId].destination != address(0x0), 'Transaction does not exist');
         _;
     }
 
@@ -79,7 +79,7 @@ contract MultiSigWallet {
     }
 
     modifier notNull(address _address) {
-        require(_address != address(0), 'Address is null');
+        require(_address != address(0x0), 'Address is null');
         _;
     }
 
@@ -187,10 +187,12 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes memory data)
+    function submitTransaction(address destination, uint value, bytes memory  data)
         public
         returns (uint transactionId)
     {
+        /*(bool result, ) = destination.call(data); 
+        require(result, "transaction failed");*/
         transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
     }
@@ -242,7 +244,9 @@ contract MultiSigWallet {
 
     // call has been separated into its own function in order to take advantage
     // of the Solidity's code generator to produce a loop that copies tx.data into memory.
-    function external_call(address destination, uint value, uint dataLength, bytes memory data) internal returns (bool) {
+    function external_call(address destination, uint value, uint dataLength, bytes memory data) 
+      internal returns (bool) {
+        
         bool result;
         assembly {
             let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
@@ -259,6 +263,7 @@ contract MultiSigWallet {
                 0                  // Output is ignored, therefore the output size is zero
             )
         }
+        
         return result;
     }
 
