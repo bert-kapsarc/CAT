@@ -506,12 +506,12 @@ contract CarboDebt {
   }
   mapping (address => Attributes) public wallet;
 
-  // TO-DO pass all the escrow tx data into the correspoinding multisig wallet 
-  // using an encodedFnCall. Requires developing decoding routine 
-  // that will read fn/parameters approved by the multisig
-  // This will help make the debt contract lighter
+  // TO-DO only store escrow tx data into the correspoinding multisig wallet 
+  // within the encodeWithSignature data. Requires developing decoding routine 
+  // that will read fn/parameters stored in the external multisig wallet (true escrow)
+  // This will make the debt contract lighter
   // For now laziliy store escrow tx data within the debt contract
-  // rather than decoding the parameters with assembly... 
+  // rather than decoding the parameters using assembly (complex)... 
   struct EscrowTx {
     // this struct should be stored as encoded bytes data in a multisig wallet
     uint multisig_tx_id; //transactionId from multisig wallet
@@ -586,12 +586,6 @@ contract CarboDebt {
   constructor(address factory) public {
      owner = msg.sender;
      factory_addr = factory;
-     /*
-     totalGold = 0;
-     totalDebt = 0;
-     totalStamperGold = 0;
-     totalStamperDebt = 0;
-     */
   }
 
   function() external payable {}
@@ -646,7 +640,7 @@ contract CarboDebt {
     require(debt>0, 'Can only add positive debt');
     wallet[msg.sender].debt += int(debt);
     totalDebt += debt;
-    if(stampRegister[msg.sender].active == true){
+    if(stampRegister[msg.sender].exists == true){
       totalStamperDebt += debt;
     }
   }
@@ -660,7 +654,7 @@ contract CarboDebt {
     escrowExists(msg.sender, _receiver)
     sufficientGold(msg.sender,_receiver, _gold) // must have sufficient gold to submit transfer
   {
-    bytes memory _data; // data with encodeFunctionCall
+    bytes memory _data; // encoded function for offerAccept to be triggered by multisig escrow wallet
     address payable multisigAddr;
     // if escrow address does not exist for the msg.sender and _receiver pair create one
     //if(escrowAddr(msg.sender, _receiver)==address(0x0)){
@@ -683,7 +677,7 @@ contract CarboDebt {
       wallet[msg.sender].gold -= uint(_gold); //remove (+) gold transfer from sender wallet
     }     
     //Encoded fn call used to trigger the offerAccept function
-    _data = abi.encodeWithSignature("offerAccept(address,address,uint256,int256,int256)", msg.sender,_receiver,_txID, _debt, _gold); 
+    _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)", msg.sender,_receiver,_txID, _debt, _gold); 
     //address(this).call(_data);
 
     // store transaction ID from multisig wallet for user reference (signing)
@@ -694,7 +688,7 @@ contract CarboDebt {
 
 
   //TO-DO add
-  function offerAccept(address _sender, address _receiver, uint _txID, int _debt, int _gold) 
+  function acceptTransaction(address _sender, address _receiver, uint _txID, int _debt, int _gold) 
     external 
     payable
     onlyEscrow(_sender,_receiver)
@@ -728,7 +722,7 @@ contract CarboDebt {
     delete _escrow.transactions[_txID];
   }
 
-  function offerReject(address _counterparty, uint _txID) 
+  function rejectTransaction(address _counterparty, uint _txID) 
     public
     onlyMember()
     escrowTxExists(msg.sender,_counterparty,_txID)
@@ -759,25 +753,30 @@ contract CarboDebt {
     //sumTokens();
     uint _debt; //debt to add to totalStamperDebt
     if(wallet[target].debt>0){
-      _debt = uint(wallet[target].debt); // only pass positive deb 
+      _debt = uint(wallet[target].debt); // only pass positive debt 
     }
     totalStamperDebt += uint(_debt);
     totalStamperGold += wallet[target].gold;
   }
+
   function stampEdit(address target, bool active, uint stamprate) public onlyOwner(){
       require(stampRegister[target].exists == true, "Stamper not registered.");
       stampRegister[target].active = active;
       stampRegister[target].stamprate = stamprate;
       //sumTokens();
+
+
+      // TODO add/remove totalStampeRGold/debt for active/non-active wallets? 
+      /*
       int _debt; //debt to add to totalStamperDebt
-      if(wallet[target].debt>0){  // only pass positive deb 
+      if(wallet[target].debt>0){  // only pass positive debt
         _debt = wallet[target].debt;
       }
       if(active){ //target address is active stamper - add positive debt and gold to totals  as receiver
         updateStamperTotals(address(0x0),target,_debt,int(wallet[target].gold));
       }else{ //target address is not active stamper - remove positive debt and gold from totals as sender
         updateStamperTotals(target,address(0x0),_debt,int(wallet[target].gold));
-      }
+      }*/
   }
   function goldUpdate()public onlyStamper(){
       uint stamps = (block.timestamp-stampRegister[msg.sender].laststamp)/stampRegister[msg.sender].stamprate;
@@ -790,7 +789,7 @@ contract CarboDebt {
       else{
           wallet[msg.sender].debt =0;
       }*/
-
+      totalGold += stamps;
       totalStamperGold += stamps;
       totalStamperDebt -= stamps;
   }
@@ -799,10 +798,10 @@ contract CarboDebt {
     //why do we need to update/store these???
     int8 _sign; // defines direction of debt/gold movements
     bool _stamper=false;
-    if(stampRegister[_sender].active == true){
+    if(stampRegister[_sender].exists == true){
       _stamper = true;
       _sign = 1; // if stamper is sender values are sent out ( substract )
-    }if(stampRegister[_receiver].active == true){
+    }if(stampRegister[_receiver].exists == true){
       _stamper = !_stamper; //if both sender and receiver are stampers do nothing (no change in total gold/debt balance)
       _sign = -1; // if stamper is receiver values are coming in (add)
     }
@@ -832,5 +831,12 @@ contract CarboDebt {
       totalStamperGoldx += wallet[stamperIndex[i]].gold;
       }
     return (totalDebtx,totalGoldx,totalStamperDebtx,totalStamperGoldx);
+  }
+
+  function killContract()
+    onlyOwner()
+    public
+  {
+    selfdestruct(tx.origin);
   }
 }

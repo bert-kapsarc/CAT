@@ -284,7 +284,7 @@ contract CarboDebt {
       //sumTokens();
 
 
-      // TODO add/remove gold/debt for active/non-active wallets? 
+      // TODO add/remove totalStampeRGold/debt for active/non-active wallets? 
       /*
       int _debt; //debt to add to totalStamperDebt
       if(wallet[target].debt>0){  // only pass positive debt
@@ -307,7 +307,7 @@ contract CarboDebt {
       else{
           wallet[msg.sender].debt =0;
       }*/
-
+      totalGold += stamps;
       totalStamperGold += stamps;
       totalStamperDebt -= stamps;
   }
@@ -349,5 +349,12 @@ contract CarboDebt {
       totalStamperGoldx += wallet[stamperIndex[i]].gold;
       }
     return (totalDebtx,totalGoldx,totalStamperDebtx,totalStamperGoldx);
+  }
+
+  function killContract()
+    onlyOwner()
+    public
+  {
+    selfdestruct(tx.origin);
   }
 }
