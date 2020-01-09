@@ -1,8 +1,8 @@
-const CarboDebtDummy = artifacts.require("./CarboDebtDummy.sol");
+const CarboDebt = artifacts.require("./CarboDebt.sol");
 
 module.exports = async (deployer) => {
     let accounts = await web3.eth.getAccounts();
-    let instance = await CarboDebtDummy.deployed();
+    let instance = await CarboDebt.deployed();
     //send 10 eth to CarboDebt contract
     await instance.send(10e18, {from: accounts[9]});
     for(let i = 0; i < 2; i++){

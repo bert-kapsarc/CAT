@@ -187,7 +187,7 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes memory  data)
+    function submitTransaction(address destination, uint value, bytes memory data)
         public
         returns (uint transactionId)
     {
@@ -235,6 +235,11 @@ contract MultiSigWallet {
             txn.executed = true;
             if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
                 emit Execution(transactionId);
+                //selfdestruct(tx.origin); 
+                //In what situations do we we want to destruct the escrow?
+                //Escrow is designed to be one time use only
+                //Escrow has no other pending tx
+
             else {
                 emit ExecutionFailure(transactionId);
                 txn.executed = false;

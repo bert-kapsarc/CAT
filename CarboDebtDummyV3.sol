@@ -90,16 +90,16 @@ contract CarboDebtDummy {
     function closeContract(bool _success, address _sender, address _receiver, uint _debtOffered, uint _goldOffered, uint _goldAsked) public onlyContract(){
     contractRegister[msg.sender].registered = false;
     if(_success && _goldAsked <= wallet[_receiver].gold){  //if contract agreed and gold asked for is still there
-    if(wallet[_sender].debt<=_debtOffered){      //doesn't matter if enough debt, just make more
-    wallet[_sender].debt = 0;
-    }
-    else{
-    wallet[_sender].debt -= _debtOffered;       //pull debt
-    }
-    wallet[_receiver].debt += _debtOffered;     //push debt
-    wallet[_receiver].gold += _goldOffered;     //pull gold from escrow, push to receiver
-    wallet[_receiver].gold -= _goldAsked;       //pull gold from receiver (non escrow)
-    wallet[_sender].gold += _goldAsked;         //push gold to sender
+      if(wallet[_sender].debt<=_debtOffered){      //doesn't matter if enough debt, just make more
+      wallet[_sender].debt = 0;
+      }
+      else{
+      wallet[_sender].debt -= _debtOffered;       //pull debt
+      }
+      wallet[_receiver].debt += _debtOffered;     //push debt
+      wallet[_receiver].gold += _goldOffered;     //pull gold from escrow, push to receiver
+      wallet[_receiver].gold -= _goldAsked;       //pull gold from receiver (non escrow)
+      wallet[_sender].gold += _goldAsked;         //push gold to sender
     }
     else{
         wallet[_sender].gold += _goldOffered;   //Escrow returned to sender if failed or insufficient funds from receiver
