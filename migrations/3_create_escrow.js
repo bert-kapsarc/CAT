@@ -6,7 +6,7 @@ module.exports = async (deployer) => {
     // create escrow wallet
     await instance.createEscrow(accounts[0],{from: accounts[1]});
     // create offerTransaction
-    await instance.createTransaction(accounts[0],-10,0,{from: accounts[1]});
+    await instance.createTransaction(accounts[0],10000,0,{from: accounts[1]});
     let escrowAdrr = await instance.escrowAddr(accounts[1], accounts[0]);
     let multisig = await MultiSigWallet.at(escrowAdrr);
 

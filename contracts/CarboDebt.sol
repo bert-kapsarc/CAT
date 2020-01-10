@@ -199,7 +199,6 @@ contract CarboDebt {
     //address(this).call(_data);
 
     // store transaction ID from multisig wallet for user reference (signing)
-    MultiSigWallet(multisigAddr);
     uint _value = msg.value;
     _tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);
   }

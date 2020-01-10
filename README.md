@@ -69,7 +69,7 @@ These are instructions for interacting with the Beta version of CarboDebt hosted
 
 * load the following contracts using the At Address button
 
-    MultiSigWallet Address
+    MultiSigWalletFactory Address (this is used to create MultiSigWallets for CarboDebt wallet pairs)
     ```
     0x08AA8Ae1E7A087b591a5a1234fBE20e592c5c417
     ```
