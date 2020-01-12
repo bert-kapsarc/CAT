@@ -1,7 +1,7 @@
 
 // File: contracts/Factory.sol
 
-pragma solidity ^0.5.16;
+pragma solidity ^0.5.12;
 
 contract Factory {
 
@@ -46,7 +46,7 @@ contract Factory {
 
 // File: contracts/MultiSigWallet.sol
 
-pragma solidity ^0.5.16;
+pragma solidity ^0.5.12;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -239,8 +239,8 @@ contract MultiSigWallet {
         public
         returns (uint transactionId)
     {
-        (bool result, ) = destination.call(data); 
-        require(result, "transaction failed");
+        //(bool result, ) = destination.call(data); 
+        //require(result, "transaction failed");
         transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
     }
@@ -451,7 +451,7 @@ contract MultiSigWallet {
 
 // File: contracts/MultiSigWalletFactory.sol
 
-pragma solidity ^0.5.16;
+pragma solidity ^0.5.12;
 
 
 
@@ -479,7 +479,7 @@ contract MultiSigWalletFactory is Factory {
 
 // File: contracts/CarboTag.sol
 
-pragma solidity ^0.5.16;
+pragma solidity ^0.5.12;
 
 contract CarboTag {
     /*
@@ -502,6 +502,11 @@ contract CarboTag {
     string name;   //Text Identifier
     int tag;      //Tag held
     uint gold;      //Gold held
+    address[] escrowList; //escrow addresses associated with each wallet
+    // Note this is additional data stored on the network
+    // To help users keep track of the escrow accounts associated with their wallet
+    // and check for exisitng transactions in each escrow
+    // to minimze data storage we could store this data externally...
   }
   mapping (address => Attributes) public wallet;
 
@@ -512,32 +517,28 @@ contract CarboTag {
   // For now laziliy store escrow tx data within the tag contract
   // rather than decoding the parameters using assembly (complex)... 
   struct EscrowTx {
-    // this struct should be stored as encoded bytes data in a multisig wallet
+    
     uint multisig_tx_id; //transactionId from multisig wallet
     bool exists;
+    // Below attributes are stored as encoded bytes data in the external multisig wallet
     address sender;
     address receiver;
     int tag; // signed integer tag transfer, (+) for send tag to receiver, (-) to request tag transfer to sender
     int gold; // signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
   }
+  // Attributes for a given escrow
   struct EscrowAttr {
-    uint last_tx_id; // last_tx_id
+    uint transactionsCount; // transactionsCount
     mapping(uint => EscrowTx) transactions;
   }
 
-  function transactionData(address _escrowAddr, uint _txID)
-    public
-    view
-    returns(uint)
-  {
-    return(escrow[_escrowAddr].transactions[_txID].multisig_tx_id);
-  }
-
+  // store in mappin escrow address for a given address pair 
   mapping(address => mapping(address => address payable)) internal EscrowAddr;
 
+  // mapping to attributes for the external escrow address 
   mapping(address => EscrowAttr) public escrow;
 
-    //Split Stamper management into a separate struct
+  //Split Stamper management into a separate struct
   struct StampData {
     bool exists;   //Has registered before
     bool active;   //Is stamper active?
@@ -548,7 +549,7 @@ contract CarboTag {
   mapping (address => StampData) public stampRegister;
   mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
   mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
-  
+
   modifier onlyOwner () {    //added some security
       require(msg.sender == owner);
       _;
@@ -622,14 +623,19 @@ contract CarboTag {
     onlyMember()
     escrowDoesNotExist(msg.sender,_receiver)
     returns(address payable _escrowAddr){
-    uint _required = 2;
+    // Escrow has 3 participants and all must sign
+    // include this contract as onwer of ESCROW
+    // confirms that this cpnytract is party in the escrow (can submit TXs)
+    uint _required = 3;
     address[] memory _owners = new address[](3);
     _owners[0]= msg.sender;
     _owners[1]=_receiver;
     _owners[2]= address(this);
-    //uint256 _value = 2e18;
-    _escrowAddr = MultiSigWalletFactory(factory_addr).create(_owners, _required);
-    EscrowAddr[msg.sender][_receiver] = address(_escrowAddr);
+
+    _escrowAddr = address(MultiSigWalletFactory(factory_addr).create(_owners, _required));
+    EscrowAddr[msg.sender][_receiver] = _escrowAddr;
+    wallet[msg.sender].escrowList.push(_escrowAddr);
+    wallet[_receiver].escrowList.push(_escrowAddr);
   }
 
   function stampPmtAdjust(uint minpmt) public onlyStamper(){
@@ -653,41 +659,33 @@ contract CarboTag {
     onlyMember()
     escrowExists(msg.sender, _receiver)
     sufficientGold(msg.sender,_receiver, _gold) // must have sufficient gold to submit transfer
-    returns(uint)
   {
-    address multisigAddr;
-    // if escrow address does not exist for the msg.sender and _receiver pair create one
-    //if(findEscrowAddr(msg.sender, _receiver)==address(0x0)){
-    //  multisigAddr = address(createEscrow(_receiver));
-    //}else{
-    // load existing escrow attributes
-      multisigAddr = findEscrowAddr(msg.sender, _receiver);
-    //}
-    EscrowAttr storage _escrow=escrow[multisigAddr];
-    
-    uint _txID = _escrow.last_tx_id++; //initialize next tx id
-
-    EscrowTx storage _tx = _escrow.transactions[_txID];
-    _tx.exists = true;
-    _tx.sender = msg.sender;
-    _tx.receiver = _receiver;
-    _tx.gold = _gold; // store gold transfer for reference before approval by receiver
-    _tx.tag = _tag; // store tag transfer for reference before approval by receiver
     if(_gold>0){
       wallet[msg.sender].gold -= uint(_gold); //remove (+) gold transfer from sender wallet
-    }     
-
-    // encoded function for offerAccept to be triggered by multisig escrow wallet
-    bytes memory  _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
-    //address(this).call(_data);
-    uint _value = msg.value;
-    address _destination = address(this);
-
-    (bool success, bytes memory result) = multisigAddr.delegatecall(abi.encodeWithSignature("submitTransaction(address,uint256,bytes)",_destination,_value,_data));
-    // store transaction ID from multisig wallet for user reference (signing)
-    if(success){_tx.multisig_tx_id = abi.decode(result, (uint256));}
-    //_tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);
-    //return(_tx.multisig_tx_id);
+    }
+    if(_tag==0 && _gold>0){
+      // send the gold now if it is not combined with a debt transfer request 
+      // request to send or receive debt (dont let trolls pull debt off user accounts)
+      wallet[_receiver].gold += uint(_gold);
+    }else{  
+      // Store transaction in Escrow
+      address payable multisigAddr = findEscrowAddr(msg.sender, _receiver);
+      EscrowAttr storage _escrow=escrow[multisigAddr];
+      
+      uint _txID = _escrow.transactionsCount++; //initialize next tx id
+  
+      EscrowTx storage _tx = _escrow.transactions[_txID];
+      _tx.exists = true;
+      _tx.sender = msg.sender;
+      _tx.receiver = _receiver;
+      _tx.gold = _gold; // store gold transfer for reference before approval by receiver
+      _tx.tag = _tag; // store tag transfer for reference before approval by receiver
+      // encoded function for offerAccept to be triggered by multisig escrow wallet
+      bytes memory  _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
+      //address(this).call(_data);
+      uint _value = msg.value;
+      _tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);
+    }
   }
 
 
@@ -786,16 +784,19 @@ contract CarboTag {
       }*/
   }
   function goldUpdate()public onlyStamper(){
+      // Some points to address
+      // Block timestamp can be manipulated by miners within 900s
+      // Make sure that this deos not distort the stamping rate within am acceptable tollerance
+      // Need to set other stamp constriants (total stamps based on auditing, or other metrics)
+
+      // Stampers are free to produce negative debt when stamping... 
       uint stamps = (block.timestamp-stampRegister[msg.sender].laststamp)/stampRegister[msg.sender].stamprate;
       wallet[msg.sender].gold += stamps;
-      wallet[msg.sender].tag -= int(stamps); // tag can be negative
+      if(wallet[msg.sender].tag>int(stamps)){wallet[msg.sender].tag -= int(stamps);}
+      else{wallet[msg.sender].tag = 0;} 
+      // Keeps tag from going negative
+      // Stamper wallet can not have ngative debt after stamping ...(?)
 
-      /*if(wallet[msg.sender].tag>=stamps){  //Keeps tag from going negative/wraparound to huge number
-        wallet[msg.sender].tag -= stamps;    
-      }
-      else{
-          wallet[msg.sender].tag =0;
-      }*/
       totalGold += stamps;
       totalStamperGold += stamps;
       totalStamperTag -= stamps;
@@ -819,6 +820,38 @@ contract CarboTag {
     }
   }
 
+  // Fn to get the external multisig transaciton ID for an escrow transaction 
+  // created in this contract 
+  function transactionData(address _escrowAddr, uint _txID)
+    public
+    view
+    returns(uint)
+  {
+    return(escrow[_escrowAddr].transactions[_txID].multisig_tx_id);
+  }
+  // Function to return all existing escrow txs.
+  function getTransactionIds(address _escrowAddr, uint from, uint to)
+      public
+      view
+      returns (uint[] memory _transactionIds)
+  {
+      EscrowAttr storage _escrow = escrow[_escrowAddr];
+      uint[] memory transactionIdsTemp = new uint[](_escrow.transactionsCount);
+      uint count = 0;
+      uint i;
+      
+      for (i=0; i<_escrow.transactionsCount; i++)
+          if ( _escrow.transactions[i].exists )
+          {
+              transactionIdsTemp[count] = i;
+              count += 1;
+          }
+      _transactionIds = new uint[](to - from);
+      for (i=from; i<to; i++)
+          _transactionIds[i - from] = transactionIdsTemp[i];
+  }
+  
+
   function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
     // this iwill end up costing too much gass
     // instead just update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
@@ -839,6 +872,7 @@ contract CarboTag {
       }
     return (totalTagx,totalGoldx,totalStamperTagx,totalStamperGoldx);
   }
+
 
   function killContract()
     onlyOwner()
