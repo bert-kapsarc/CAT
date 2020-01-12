@@ -1,23 +1,23 @@
-const CarboDebt = artifacts.require("./CarboDebt.sol");
+const CarboTag = artifacts.require("./CarboTag.sol");
 const MultiSigWallet = artifacts.require("./MultiSigWallet.sol");
 module.exports = async (deployer) => {
     let accounts = await web3.eth.getAccounts();
-    let instance = await CarboDebt.deployed();
+    let instance = await CarboTag.deployed();
     // create escrow wallet
     await instance.createEscrow(accounts[0],{from: accounts[1]});
     // create offerTransaction
     await instance.createTransaction(accounts[0],10000,0,{from: accounts[1]});
-    let escrowAdrr = await instance.escrowAddr(accounts[1], accounts[0]);
-    let multisig = await MultiSigWallet.at(escrowAdrr);
-
-    console.log(escrowAdrr);
+    let escrowAddr = await instance.findEscrowAddr(accounts[1], accounts[0]);
+    let multisig = await MultiSigWallet.at(escrowAddr);
+    console.log(escrowAddr);
     console.log(instance.address); 
+    console.log(await instance.transactionData(escrowAddr,0));
 
     // put some funds in the escrow for tx fees
     //await multisig.send(1e18, {from: accounts[1]});
 
     // generate encodedFunctionCall
-    // to use in external_call to CarboDebt contract upon confirmation of multisig tx;
+    // to use in external_call to CarboTag contract upon confirmation of multisig tx;
     /*
     let data = web3.eth.abi.encodeFunctionCall({
       "constant": false,
@@ -41,7 +41,7 @@ module.exports = async (deployer) => {
         
         ,{
           "internalType": "int256",
-          "name": "debt",
+          "name": "tag",
           "type": "int256"
         }
         ,{
@@ -65,10 +65,8 @@ module.exports = async (deployer) => {
     // submit tx with FunctionCall
     //let txID0 = await multisig.submitTransaction(instance.address, value, data, {from: accounts[1]});
     //console.log(txID0);
-    
 
-
-    //await instance.offerAcceptDebt(accounts[1], accounts[0], 1);
+    //await instance.offerAcceptTag(accounts[1], accounts[0], 1);
     //const result = await web3.eth.send({to: instance.address,data});
     //console.log(result);
 }

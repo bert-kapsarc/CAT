@@ -2,6 +2,10 @@
 
 A smart contract/ dApp for tracking  emission responsabilities associated with the consumption of hydrocarbon resources. 
 
+Non-linear allocation agreements -
+
+Debt is a linear agreement .. this is more of an allocation agreement
+
 Not a carbon credit program. It is a debt contract. The pupose of the contracts are to provide a scientifically rigorous account of where emission debt is coming from and how it is being traded.
 
 Debt holder can pay a fee to abate their emissions through an approved carbon sinker, such as sequestration, reforestation. Sinkers certify the CarboDebt to issue CarboGold, converting it into a neutral emission: an amount of carbon removed from the atmosphere based on agreements between debt participants. The value of carbon gold could reflect the marginal cost of the carbon sinker, or some perceived value that a producer/consumer may be willing to pay to receive CarboGold rather than CarboDebt, as proof of offset emissions.
@@ -99,7 +103,7 @@ chmod u+x run.sh
  
 Too flatten all the contracts fro easy import into solidity browser ([Remix](https://remix.ethereum.org/) )
 ```
-truffle-flattener contracts/CarboDebt.sol >> flatContract.sol
+truffle-flattener contracts/CarboTag.sol >> flatContract.sol
 ```
 
 There are two strategies for implementing carbo-debt;

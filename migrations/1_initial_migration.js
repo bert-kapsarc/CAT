@@ -11,12 +11,12 @@ const Migrations = artifacts.require("./Migrations.sol");
 const MultisigWallet = artifacts.require('MultiSigWallet.sol');
 const Factory = artifacts.require('Factory.sol');
 const MultisigWalletFactory = artifacts.require('MultisigWalletFactory.sol')
-const CarboDebt = artifacts.require("./CarboDebt.sol");
+const CarboTag = artifacts.require("./CarboTag.sol");
 module.exports = function(deployer) {
     deployer.deploy(Migrations);
     deployer.deploy(Factory);
     deployer.deploy(MultisigWalletFactory).then(function() {
-        return deployer.deploy(CarboDebt, MultisigWalletFactory.address);
+        return deployer.deploy(CarboTag, MultisigWalletFactory.address);
     });
   //const args = process.argv.slice()
   //deployer.deploy(MultisigWalletFactory)
