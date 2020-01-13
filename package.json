@@ -1,0 +1,24 @@
+{
+  "name": "cabotag-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CarboTag API",
+  "main": "index.js",
+  "engines": {
+    "node": "11.x"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "pg": "^7.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}
