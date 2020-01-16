@@ -118,6 +118,7 @@ contract CarboTag {
   function() external payable {}
     
   function signUp(string memory name) public{
+      require(wallet[msg.sender].registered != true, "ALREADY REGISTERED");
       accountCount++;
       accountIndex[accountCount]=msg.sender;
       wallet[msg.sender].name = name;
@@ -184,7 +185,6 @@ contract CarboTag {
     }
     if(_tag==0 && _gold>0){
       // send the gold now if it is not combined with a debt transfer request 
-      // request to send or receive debt (dont let trolls pull debt off user accounts)
       wallet[_receiver].gold += uint(_gold);
     }else{  
       // Store transaction in Escrow
@@ -200,7 +200,7 @@ contract CarboTag {
       _tx.gold = _gold; // store gold transfer for reference before approval by receiver
       _tx.tag = _tag; // store tag transfer for reference before approval by receiver
       // encoded function for offerAccept to be triggered by multisig escrow wallet
-      bytes memory  _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
+      bytes memory _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
       //address(this).call(_data);
       uint _value = msg.value;
       _tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);

@@ -1,0 +1,27 @@
+extends layout
+block content
+  script(src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js")
+  script(src="/javascripts/MetaMask.js")
+
+  script= contract
+  h1= title
+  head
+    title User Form
+
+  body
+    p A dApp for tracking emission responsibilities from hydrocarbon resources in commercial transactions and internationl trade flows.
+
+    div Total Tags: 
+      span= tags
+    div Total Gold: 
+      span= gold
+    div Total 
+      a(href='/users') Users: 
+      span= users
+    div Total 
+      a(href='/users/stampers') Stampers: 
+      span= stampers
+
+  script.
+    MetaMask(!{abi},'#{address}','#{rpcURL}')
+  div(id='signup')

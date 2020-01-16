@@ -1,22 +1,43 @@
 {
-  "name": "carbotag-api",
+  "name": "carbotag",
   "version": "1.0.0",
   "private": true,
-  "description": "CarboTag API",
-  "main": "index.js",
-  "engines": {
-    "node": "11.x"
+  "description": "CarboTag",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bert-kapsarc/carboTag.git"
   },
+  "keywords": [
+    "ethereum",
+    "web3",
+    "multisig",
+    "climate change",
+    "carbon pricing"
+  ],
+  "author": {
+    "name": "KAPSARC",
+    "email": "bertrand.rioux@kapsarc.org"
+  },
+  "contributors": [
+    {
+      "name": "Bertrand Rioux",
+      "email": "bertrand.rioux@kapsarc.org"
+    },
+    {
+      "name": "Colin Ward",
+      "email": "colin.ward@kapsarc.org"
+    }
+  ],
+  "license": "ISC",
   "scripts": {
-    "start": "node index.js",
-    "start:dev": "nodemon index.js",
+    "install": "cd dapp && npm install",
+    "start": "cd dapp && npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "pg": "^7.17.1"
+    "ganache-cli": "6.7.0",
+    "solc": "0.5.12",
+    "truffle": "5.1.8"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"

@@ -1,0 +1,18 @@
+h2 Profile:  
+    span= wallet.name
+div Tags: 
+    span= wallet.tag
+div Gold: 
+    span= wallet.gold
+div Stamper: 
+    if stamper.exists
+        div Active: 
+            span= stamper.active
+        div Stamp Rate: 
+            span= stamper.stamprate
+        div Min Payment: 
+            span= stamper.minpt
+        div Last Stamp: 
+            span= stamper.laststamp
+    else
+        span No

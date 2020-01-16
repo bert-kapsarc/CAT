@@ -1,0 +1,11 @@
+h2 Register your wallet
+form(action = '/users', method = 'POST', name='signup', remote='true')
+    div
+       label(for = 'name') name:
+       input(name = 'name' value = '')
+    br
+    div
+       label(for = 'wallet') wallet:
+       input(name = 'wallet' value= address)
+    br
+    button(type = 'submit') Sign Up

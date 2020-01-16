@@ -1,3 +1,26 @@
+We summarize the function of the carbo-debt contract in the 5 points below.
+
+1.  anyone can create a carbo debt wallet to issue carbon budget attributed to production ownership of commodity with a known energy content/intput 
+
+2.  Each participant in a contract is defined by a given decentralized identifier (DiD)
+    supplier (hydrocarbon producers). Usually the first creators of carbon debt
+    consumer (can voluntarily create debt contract if not initiated further upstream)
+    carbon sinker (sequestration, reforestation, ,,,)
+
+    sinkers also play the role of converting Carbon debt into carbon gold ...
+
+3.  Can request to send/receive carbo debt from a counter-party, with the all parties approval (signature)
+
+4.  The debt contract is transferred on 
+        sale of commodity, 
+        paying sinker to offload the responsability
+
+5.  Contract participants can fund contract use by carbon manager to off-take the debt
+
+6.  Recipients can decline to receive the debt, and contract may communicate the additional charge for retaining the debt. Or sender cna offer the option to receive CarboGold in exchange for an additional fee.
+
+A wallet can be use to submit a fee to abate emissions through an approved carbon sinker (CCS, reforestation). Sinkers certify carbon emissions to issue CarboGold, and emission offset certificate: an amount of carbon removed from the atmosphere. The value of carbon gold reflects the marginal cost of the carbon sgtampers, or some perceived value that a producer/consumer are willing to pay to receive certified CarboGold rather than an emission responability, proof of offset emissions.
+
 There are two strategies for implementing carbo-debt;
     1. a trustless and voluntary carbon management game (more complex network dynamics, easier institutional framework)
     2. a trusted/permissioned binding contract  (less complicated network design, more challenging institutional design). 
