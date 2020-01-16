@@ -66,6 +66,8 @@ contract CarboTag {
     uint laststamp;  //time of last stamping
   }
   mapping (address => StampData) public stampRegister;
+  // TODO we dont need to cycle through accounts or stampers, unless we want to 
+  // pull a directory of all registered wallets. This will increae the weight of the contract
   mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
   mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
 
@@ -372,9 +374,8 @@ contract CarboTag {
   
 
   function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
-    // this iwill end up costing too much gass
-    // instead just update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
-    // or use this just to view current state 
+    // Commented this out as it would cost too much gas (now just a view function)
+    // instead wee update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
     uint totalTagx = 0;
     uint totalGoldx = 0;
     uint totalStamperTagx = 0;

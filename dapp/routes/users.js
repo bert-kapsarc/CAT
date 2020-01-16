@@ -28,7 +28,17 @@ const addUser = (request, response) => {
 const users_query = 'SELECT * FROM users ORDER BY id ASC'; 
 const stampers_query = 'SELECT * FROM users WHERE stamper = TRUE ORDER BY id ASC'; 
 
-function getUsers(result,query){
+async function getUsers(result,query){
+  /*
+  const count = await carboTag.callFn('accountCount')
+  const rows = []
+  for (i = 0; i < 5; i++) {
+    const address = await carboTag.callFn('accountIndex',i)
+    const user = await carboTag.callFn('wallet',address)
+    rows[i] = [user.name,user.wallet];
+  }
+  result.render('users', { users: rows})
+  */
   pool.query(query, (error, results) => {
     if (error) {
       throw error
@@ -46,12 +56,13 @@ router.get('/stampers',async function (req, res) {
 })
 
 router.get('/form', async function (req, res) {
-  //console.log(req.query)
+  console.log(req.query)
   const wallet = await carboTag.callFn('wallet',req.query.address)
   const stamper = await carboTag.callFn('stampRegister',req.query.address)
   if(wallet.registered){
     res.render('profile', {
-        wallet: wallet,
+        user: wallet,
+        address: req.query.address,
         stamper: stamper
     }) 
   }else{
