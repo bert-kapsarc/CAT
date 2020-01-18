@@ -1,0 +1,19 @@
+table(style='width:100%', border='1')
+  tr
+    th TX_ID
+    th Tags
+    th Gold
+    th Issuer
+  each tx in data.escrow.transactions
+    tr
+      td
+        if tx.confirmed 
+          span Waiting for Counterparty
+        else
+          form(class='confirmEscrow')
+            input(name = 'escrowTxId' type="hidden" value= tx.multisig_tx_id) 
+            button(type = 'Submit') Confirm TX #{tx.multisig_tx_id}
+      td= tx.tag
+      td= tx.gold
+      td= tx.issuer
+input(name = 'escrowAddr' type="hidden" value= data.escrow.address )  

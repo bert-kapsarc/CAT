@@ -488,7 +488,7 @@ contract CarboTag {
   event EscrowFunded (address indexed sender, uint256 indexed value);
 
 
-  address owner;
+  mapping (address => bool) public owner;
   address public factory_addr;
   uint public accountCount; //number of accounts
   uint public stamperCount; //number of stampers
@@ -516,27 +516,23 @@ contract CarboTag {
   // This will make the tag contract lighter
   // For now laziliy store escrow tx data within the tag contract
   // rather than decoding the parameters using assembly (complex)... 
-  struct EscrowTx {
+  struct EscrowTxAttr {
     
     uint multisig_tx_id; //transactionId from multisig wallet
     bool exists;
     // Below attributes are stored as encoded bytes data in the external multisig wallet
-    address sender;
-    address receiver;
+    address issuer;
+    //address receiver;
     int tag; // signed integer tag transfer, (+) for send tag to receiver, (-) to request tag transfer to sender
     int gold; // signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
   }
-  // Attributes for a given escrow
-  struct EscrowAttr {
-    uint transactionsCount; // transactionsCount
-    mapping(uint => EscrowTx) transactions;
-  }
 
-  // store in mappin escrow address for a given address pair 
+  // store in mapping escrow address for a given address pair 
   mapping(address => mapping(address => address payable)) internal EscrowAddr;
 
   // mapping to attributes for the external escrow address 
-  mapping(address => EscrowAttr) public escrow;
+  mapping(address => mapping(uint => EscrowTxAttr)) public escrowTx;
+  mapping(address => uint) public escrowTxCount;
 
   //Split Stamper management into a separate struct
   struct StampData {
@@ -545,13 +541,16 @@ contract CarboTag {
     uint stamprate; //Rate of stamping speed
     uint minpmt;    //Minimum accepted payment
     uint laststamp;  //time of last stamping
+    int votes;      //up votes
   }
   mapping (address => StampData) public stampRegister;
+  // TODO we dont need to cycle through accounts or stampers, unless we want to 
+  // pull a directory of all registered wallets. This will increae the weight of the contract
   mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
   mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
 
   modifier onlyOwner () {    //added some security
-      require(msg.sender == owner);
+      require(owner[msg.sender] == true);
       _;
   }
   modifier onlyStamper () {  //added some security
@@ -573,7 +572,7 @@ contract CarboTag {
   }
   modifier escrowTxExists(address _sender, address _receiver, uint _txID){
     require(findEscrowAddr(_sender, _receiver)!=address(0x0)
-      && escrow[findEscrowAddr(_sender, _receiver)].transactions[_txID].exists, 
+      && escrowTx[findEscrowAddr(_sender, _receiver)][_txID].exists, 
       "Escro TX does not exist");
     _;  
   }
@@ -592,13 +591,21 @@ contract CarboTag {
     _;
   }
   constructor(address factory) public {
-     owner = msg.sender;
+     owner[msg.sender]=true;
      factory_addr = factory;
   }
 
   function() external payable {}
     
+  function addOwner(address _target)  
+    public 
+    onlyOwner()
+  {
+    owner[_target]=true;
+  }
+
   function signUp(string memory name) public{
+      require(wallet[msg.sender].registered != true, "ALREADY REGISTERED");
       accountCount++;
       accountIndex[accountCount]=msg.sender;
       wallet[msg.sender].name = name;
@@ -665,23 +672,21 @@ contract CarboTag {
     }
     if(_tag==0 && _gold>0){
       // send the gold now if it is not combined with a debt transfer request 
-      // request to send or receive debt (dont let trolls pull debt off user accounts)
       wallet[_receiver].gold += uint(_gold);
     }else{  
       // Store transaction in Escrow
       address payable multisigAddr = findEscrowAddr(msg.sender, _receiver);
-      EscrowAttr storage _escrow=escrow[multisigAddr];
       
-      uint _txID = _escrow.transactionsCount++; //initialize next tx id
-  
-      EscrowTx storage _tx = _escrow.transactions[_txID];
+      
+      uint _txID = escrowTxCount[multisigAddr]++; //initialize next tx id
+      EscrowTxAttr storage _tx=escrowTx[multisigAddr][_txID];
       _tx.exists = true;
-      _tx.sender = msg.sender;
-      _tx.receiver = _receiver;
+      _tx.issuer = msg.sender;
+      //_tx.receiver = _receiver;
       _tx.gold = _gold; // store gold transfer for reference before approval by receiver
       _tx.tag = _tag; // store tag transfer for reference before approval by receiver
       // encoded function for offerAccept to be triggered by multisig escrow wallet
-      bytes memory  _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
+      bytes memory _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
       //address(this).call(_data);
       uint _value = msg.value;
       _tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);
@@ -696,8 +701,8 @@ contract CarboTag {
     onlyEscrow(_sender,_receiver)
     escrowTxExists(_sender,_receiver,_txID)
   {
-    EscrowAttr storage _escrow = escrow[findEscrowAddr(_sender,_receiver)];
-    EscrowTx storage _tx = _escrow.transactions[_txID];
+    address _escrowAddr = findEscrowAddr(_sender,_receiver);
+    EscrowTxAttr storage _tx = escrowTx[_escrowAddr][_txID];
     // secruity cehck
     //function call should match vlalues stored in Escrow Transaction
     //if we store all data in encodedFuncitonCall we dont need this
@@ -722,7 +727,7 @@ contract CarboTag {
     updateStamperTotals(_sender,_receiver,_gold,_tag);
 
     // Delete the escrow?
-    delete _escrow.transactions[_txID];
+    delete escrowTx[_escrowAddr][_txID];
   }
 
   function rejectTransaction(address _counterparty, uint _txID) 
@@ -732,12 +737,11 @@ contract CarboTag {
   {
     address payable multisigAddr = findEscrowAddr(msg.sender, _counterparty);
     MultiSigWallet(multisigAddr).revokeConfirmation(_txID);
-    EscrowAttr storage _escrow = escrow[multisigAddr];
-    EscrowTx storage _tx = _escrow.transactions[_txID];
+    EscrowTxAttr storage _tx = escrowTx[multisigAddr][_txID];
     if(_tx.gold>0){// if sender has added gold to escrow
-      wallet[_tx.sender].gold += uint(_tx.gold); //return gold in escrow to sender
+      wallet[_tx.issuer].gold += uint(_tx.gold); //return gold in escrow to issuers
     }
-    delete _escrow.transactions[_txID];
+    delete escrowTx[multisigAddr][_txID];
   }
   
 
@@ -827,7 +831,7 @@ contract CarboTag {
     view
     returns(uint)
   {
-    return(escrow[_escrowAddr].transactions[_txID].multisig_tx_id);
+    return(escrowTx[_escrowAddr][_txID].multisig_tx_id);
   }
   // Function to return all existing escrow txs.
   function getTransactionIds(address _escrowAddr, uint from, uint to)
@@ -835,13 +839,12 @@ contract CarboTag {
       view
       returns (uint[] memory _transactionIds)
   {
-      EscrowAttr storage _escrow = escrow[_escrowAddr];
-      uint[] memory transactionIdsTemp = new uint[](_escrow.transactionsCount);
+      uint[] memory transactionIdsTemp = new uint[](escrowTxCount[_escrowAddr]);
       uint count = 0;
       uint i;
       
-      for (i=0; i<_escrow.transactionsCount; i++)
-          if ( _escrow.transactions[i].exists )
+      for (i=0; i<escrowTxCount[_escrowAddr]; i++)
+          if ( escrowTx[_escrowAddr][i].exists )
           {
               transactionIdsTemp[count] = i;
               count += 1;
@@ -853,9 +856,8 @@ contract CarboTag {
   
 
   function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
-    // this iwill end up costing too much gass
-    // instead just update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
-    // or use this just to view current state 
+    // Commented this out as it would cost too much gas (now just a view function)
+    // instead wee update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
     uint totalTagx = 0;
     uint totalGoldx = 0;
     uint totalStamperTagx = 0;

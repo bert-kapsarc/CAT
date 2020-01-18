@@ -4,5 +4,13 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
     script(src="https://code.jquery.com/jquery-3.1.0.min.js")
+    script(src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js")
+
   body
+    script(src="/javascripts/MetaMask.js")
+    script.
+        MetaMask(!{JSON.stringify(contract)})
     block content
+    hr
+    div(id='metaMask')
+

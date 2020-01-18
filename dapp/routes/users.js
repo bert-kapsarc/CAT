@@ -4,29 +4,40 @@ var router = express.Router();
 // for querying postgres
 const { pool } = require('../config')
 
-
-const getUsersJSON = (request, response) => {
-  pool.query(users_query, (error, results) => {
-    if (error) {
-      throw error
-    }
-    response.status(200).json(results.rows)
-  })
-}
-
-const addUser = (request, response) => {
-  const { name, wallet } = request.body
-
-  pool.query('INSERT INTO users (name, wallet) VALUES ($1, $2)', [name, wallet], error => {
-    if (error) {
-      throw error
-    }
-    response.status(201).json({ status: 'success', message: 'User added.' })
-  })
-}
+// Contract module to get instance of and call on MultiSigWallet
+const Contract = require('../public/javascripts/contract');
 
 const users_query = 'SELECT * FROM users ORDER BY id ASC'; 
 const stampers_query = 'SELECT * FROM users WHERE stamper = TRUE ORDER BY id ASC'; 
+
+router.param('address', async function(req, res, next, _address){
+  // Do something with id
+  // Store id or other info in req object
+  // Call next when done
+  req.data = {}
+
+  req.data.user = await carboTag.callFn('wallet',_address)
+  req.data.user.address = _address
+  req.data.user.owner = await carboTag.callFn('owner',_address)
+  if(current_user.address!=null){
+    let escrowAddr = await carboTag.callFn('findEscrowAddr',[req.data.user.address,current_user.address])  
+    req.data.escrow = {address: escrowAddr}
+    multiSigWallet = new Contract(contract.escrowAbi,escrowAddr)
+    const txCount = await carboTag.callFn('escrowTxCount',escrowAddr)
+    req.data.escrow.transactions = []
+    var tx
+    for (i = 0; i < txCount; i++) {
+      tx = await carboTag.callFn('escrowTx',[escrowAddr,i])
+      if(tx.exists){
+        req.data.escrow.transactions[i] = tx
+        req.data.escrow.transactions[i].confirmed = 
+          await multiSigWallet.callFn('confirmations',[tx.multisig_tx_id,current_user.address])
+      }
+    }
+  }
+  req.data.stamper = await carboTag.callFn('stampRegister',_address)
+  next();
+}); 
 
 async function getUsers(result,query){
   /*
@@ -55,38 +66,42 @@ router.get('/stampers',async function (req, res) {
   getUsers(res,stampers_query)
 })
 
-router.get('/form', async function (req, res) {
-  console.log(req.query)
-  const wallet = await carboTag.callFn('wallet',req.query.address)
-  const stamper = await carboTag.callFn('stampRegister',req.query.address)
-  if(wallet.registered){
-    res.render('profile', {
-        user: wallet,
-        address: req.query.address,
-        stamper: stamper
-    }) 
+router.get('/form/:address', function (req, res) {
+  //store current user
+  global.current_user = req.data.user
+  if(req.data.user.registered){
+    res.render('profile', {data: req.data}) 
   }else{
-    res.render('form', {
-        address: req.query.address
-    })    
+    res.render('signup')    
   }
+}).get('/:address', function (req, res) {
+  res.render('show', {data: req.data})
 })
-.post('/',async function (req, res) {
-  const { name, wallet } = req.body
-  //console.log(address)
-  const carboDebtWallet = await carboTag.callFn('wallet',wallet)
-  const stamper = await carboTag.callFn('stampRegister',wallet)
+
+router.post('/',async function (req, res) {
+  const { name, address } = req.body
+  console.log(req.body)
+  req.data = {}
+  req.data.address = address
+  req.data.user = await carboTag.callFn('wallet',address)
+  req.data.stamper = await carboTag.callFn('stampRegister',address)
   
-  pool.query('INSERT INTO users (name, wallet) VALUES ($1, $2)', [name, wallet], error => {
+  pool.query('INSERT INTO users (name, wallet) VALUES ($1, $2)', [name, address], error => {
     if (error) {
       throw error
-    }else{
-      res.render('profile', {
-          wallet: carboDebtWallet,
-          stamper: stamper
-      })
-    }
+    }else{res.render('profile', {data: req.data})}
   })
+})
+.get('/escrow/:address', function (req, res) {
+  res.render('escrow', {data: req.data})
+})
+.post('/stamper/:address', function (req, res) {
+  pool.query('UPDATE users SET stamper = true WHERE wallet = ($1)', [req.data.user.address], error => {
+    if (error) {
+      throw error
+    }else{res.render('show', {data: req.data})}
+  })
+  
 })
 
 //.post(addUser)

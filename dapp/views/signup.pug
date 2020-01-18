@@ -5,7 +5,7 @@ form(action = '/users', method = 'POST', name='signup', remote='true')
        input(name = 'name' value = '')
     br
     div
-       label(for = 'wallet') wallet:
-       input(name = 'wallet' value= address)
+       label(for = 'address') wallet: #{current_user.address}
+       input(name = 'address' type="hidden" value= current_user.address )
     br
     button(type = 'submit') Sign Up

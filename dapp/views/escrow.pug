@@ -1,0 +1,23 @@
+if data.escrow.address != '0x0000000000000000000000000000000000000000'
+  h3 Escrow Wallet Address: #{data.escrow.address}
+  if data.escrow.transactions.length>0
+    include transactions.pug
+  br
+
+  form(action = "/users/"+data.user.address, method = 'GET', name='createTx')
+    div
+        label(for = 'carbon') Send (+)/Receiv (-) carbon:
+        input(name = 'carbon' Value='')
+    div
+        label(for = 'gold') Send (+)/Receiv (-) gold:
+        input(name = 'gold' Value='')
+
+        input(name = 'counterparty' type="hidden" value= data.user.address )
+    div
+        button(type = 'submit') Send TX to #{data.user.name}
+
+else
+  form(action = "/users/"+data.user.address, method = 'GET', name='createEscrow')
+    input(name = 'counterparty' type="hidden" value= data.user.address )
+    button(type = 'submit') 
+      h3 Open escrow with #{data.user.name}

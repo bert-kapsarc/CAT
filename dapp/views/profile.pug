@@ -1,20 +1,27 @@
-h2 Profile:  
-    span= user.name
-div Wallet: 
-    span= address
-div Tags: 
-    span= user.tag
-div Gold: 
-    span= user.gold
-div Stamper: 
-    if stamper.exists
-        div Active: 
-            span= stamper.active
-        div Stamp Rate: 
-            span= stamper.stamprate
-        div Min Payment: 
-            span= stamper.minpt
-        div Last Stamp: 
-            span= stamper.laststamp
+block content
+    if data.user.registered
+        h2 Profile:  
+            span= data.user.name
+        div Wallet: 
+            span= data.user.address
+        div Tags: 
+            span= data.user.tag
+        div Gold: 
+            span= data.user.gold
+            
+        ul Stamper: 
+            if data.stamper.exists
+                li Active: 
+                    span= data.stamper.active
+                li Stamp Rate: 
+                    span= data.stamper.stamprate
+                li Min Payment: 
+                    span= data.stamper.minpt
+                li Last Stamp: 
+                    span= data.stamper.laststamp
+            else
+                span No
+        div
+            include carbon.pug
     else
-        span No
+        div Wallet not registered

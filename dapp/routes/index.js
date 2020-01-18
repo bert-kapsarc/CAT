@@ -9,9 +9,6 @@ router.get('/', async function (req, res,) {
         users: await carboTag.callFn('accountCount'),
         stampers: await carboTag.callFn('stamperCount'),
         //contract: require('../public/javascripts/contract'),
-        abi: JSON.stringify(abi),
-        address: process.env.CARBO_TAG_ADDR,
-        rpcURL: process.env.INFURA_ROPSTEN
     })
 
 })

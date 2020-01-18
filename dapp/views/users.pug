@@ -1,13 +1,16 @@
 extends layout
 
 block content
-    h1= title
-    table(style='width:100%', border='1')
-      tr
-        th Name
-        th Address
+  h1= title
+  table(style='width:100%', border='1')
+    tr
+      th Name
+      th Address
 
-      each user in users
-        tr
-          td #{user.name}
-          td #{user.wallet}
+    each user in users
+      tr
+        td #{user.name}
+        td 
+          a(href=('/users/'+user.wallet)) #{user.wallet}
+
+  include search.pug

@@ -19,11 +19,30 @@ const Contract = require('./public/javascripts/contract');
 const fs = require('fs');
 
 var jsonFile = "../build/contracts/CarboTag.json";
-global.abi = JSON.parse(fs.readFileSync(jsonFile)).abi
+global.site = 
+{
+    title: 'CarboTag',
+    description: 'dApp for tracking emission responsibilities (tags) from hydrocarbon resources in commercial transactions and internationl trade flows.'
+}
+global.author = {
+    name: 'Bertrand Rioux',
+    contact: 'bertrand.rioux@gmail.com'
+}
+let abi = JSON.parse(fs.readFileSync(jsonFile)).abi;
+global.contract = {
+   abi: abi,
+   escrowAbi: JSON.parse(fs.readFileSync("../build/contracts/MultiSigWallet.json")).abi,
+   address: process.env.CARBO_TAG_ADDR,
+   rpcURL: process.env.INFURA_ROPSTEN
+}
+global.current_user = {address: null}; // address extracted from active metamask plugin
+
+// store carboTag contract as gloabl json object
 global.carboTag = new Contract(abi,process.env.CARBO_TAG_ADDR)
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var deployRouter = require('./routes/deploy');
 
 const app = express()
 
@@ -47,6 +66,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/deploy', deployRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -65,3 +85,4 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+

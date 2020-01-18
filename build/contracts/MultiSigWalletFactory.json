@@ -1083,12 +1083,12 @@
         }
       },
       "links": {},
-      "address": "0x9DAF621ED8f915330B1687D7128d0f0FE1017Bc4",
-      "transactionHash": "0xa4140528d43e4f41166615441a6a8711969c7ca71b01ae1e86ff3ccdbd301c1f"
+      "address": "0x1aBBaAF2CC76542f8bC55334FE8820062e664D47",
+      "transactionHash": "0x9ec657f52b9e4eb2a0b8fc1baaf0f5cef128bebd7e9375af93379070f2106823"
     }
   },
   "schemaVersion": "3.0.20",
-  "updatedAt": "2020-01-12T13:21:31.944Z",
+  "updatedAt": "2020-01-17T15:09:38.314Z",
   "networkType": "ethereum",
   "devdoc": {
     "author": "Stefan George - <stefan.george@consensys.net>",
