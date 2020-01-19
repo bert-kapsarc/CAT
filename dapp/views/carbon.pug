@@ -10,6 +10,10 @@ if current_user.address == data.user.address
         $(document).ready(function(){
             document.querySelector('form[name=addCarbon]').action = window.location.href
         })
+
+    //form(name='stamp')
+    //  input(name = 'escrowTxId' type="hidden" value= tx.multisig_tx_id) 
+    //  button(type = 'Submit') Confirm TX #{tx.multisig_tx_id}
 br
 
 if !data.stamper.exists && current_user.owner

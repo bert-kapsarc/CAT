@@ -1,7 +1,13 @@
 doctype style
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  /*font-family: "Lucida Grande", Helvetica, Arial, sans-serif;*/
+}
+div,span,p,button,input,label{
+    font-size: 20px;
+}
+p{ 
+    text-align: justify;
+    max-width: 700px;
 }
 
 a {

@@ -1,6 +1,10 @@
 block content
     if data.user.registered
-        h2 Profile:  
+        h2
+            if data.user.address == current_user.address
+                div Your Meta Mask Wallet 
+            else
+                span Profile:   
             span= data.user.name
         div Wallet: 
             span= data.user.address

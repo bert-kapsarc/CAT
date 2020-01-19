@@ -1,15 +1,19 @@
 extends layout
 block content
-  h1= title
+  h1= site.title
   head
     title User Form
 
   body
-    p 
+    p= site.description
+    p= site.carbon
+    p= site.ledger
+    p= site.stampers
+    p= site.stamper_selection
 
-    div Total Tags: 
+    div Total Carbon (kg CO2e): 
       span= tags
-    div Total Gold: 
+    div Total Gold (certified carbon emisisons): 
       span= gold
     div Total 
       a(href='/users') Users

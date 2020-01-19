@@ -56,8 +56,6 @@ function MetaMask(contract){
 
           let stamperForm = document.querySelector('form[name=addStamper]')
           if(stamperForm!=null){stamperForm.onsubmit = addStamper}
-
-          document.getElementById('metaMask').querySelector('h2').append(" (your metamask wallet)")
         }
         $('#metaMask').append('<h3>'+browser+'</h3>')
       },

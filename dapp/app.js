@@ -22,7 +22,12 @@ var jsonFile = "../build/contracts/CarboTag.json";
 global.site = 
 {
     title: 'CarboTag',
-    description: 'dApp for tracking emission responsibilities (tags) from hydrocarbon resources in commercial transactions and internationl trade flows.'
+    description: 'A dApp for tracking "carbon" in commercial transactions and internationl trade flows.',
+    carbon: 'Carbon is a general term for embodied or potential emissions measured in Kilogram (KG) of carbon dioxide equivalent (CO2e) greenhouse gases.',
+    ledger: 'This ia a public ledger to support the development of a Circular Carbon Economy, and establsih a market to value carbon waste management.',
+    stampers: 'Stampers play a central role by issuing emission offset certificates for a fee. These include natural resource management, active carbon catpure and storage/reuse technologie, and others.',
+    stamper_selection: 'At the core of this platfome is the selection and monitoring of stampers.'
+
 }
 global.author = {
     name: 'Bertrand Rioux',
