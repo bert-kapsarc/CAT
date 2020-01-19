@@ -67,9 +67,9 @@ contract CarboTag {
   mapping (address => StampData) public stampRegister;
   // TODO we dont need to cycle through accounts or stampers, unless we want to 
   // pull a directory of all registered wallets. This will increae the weight of the contract
-  mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
-  mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
-
+  mapping (uint => address) public accountIndex;  //So we can cycle through accounts easily
+  mapping (uint => address) public stamperIndex;  //So we can cycle through stampers easily
+  
   modifier onlyOwner () {    //added some security
       require(owner[msg.sender] == true);
       _;

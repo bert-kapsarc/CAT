@@ -40,10 +40,14 @@ router.param('address', async function(req, res, next, _address){
 }); 
 
 async function getUsers(result,query){
-  /*
   const count = await carboTag.callFn('accountCount')
   const rows = []
-  for (i = 0; i < 5; i++) {
+  /*
+    need to make accountIndex public so we can call the contract
+    but do we want/need to store account directory within the contract?
+    should we jsut do this as an external cntralize service, as with the current querry below
+    the search function is available so user's can look for wallets that do not appear in the directory?
+  for (i = 0; i < count; i++) {
     const address = await carboTag.callFn('accountIndex',i)
     const user = await carboTag.callFn('wallet',address)
     rows[i] = [user.name,user.wallet];

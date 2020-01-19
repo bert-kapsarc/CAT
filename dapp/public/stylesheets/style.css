@@ -2,8 +2,8 @@ doctype style
 body {
   /*font-family: "Lucida Grande", Helvetica, Arial, sans-serif;*/
 }
-div,span,p,button,input,label{
-    font-size: 20px;
+a,p,ul,li,button,input,label{
+    font-size: 1.1em;
 }
 p{ 
     text-align: justify;

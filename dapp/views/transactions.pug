@@ -10,7 +10,7 @@ table(style='width:100%', border='1')
         if tx.confirmed 
           span Waiting for Counterparty
         else
-          form(class='confirmEscrow')
+          form(class='confirmEscrow' name='confrimTx'+tx.multisig_tx_id)
             input(name = 'escrowTxId' type="hidden" value= tx.multisig_tx_id) 
             button(type = 'Submit') Confirm TX #{tx.multisig_tx_id}
       td= tx.tag

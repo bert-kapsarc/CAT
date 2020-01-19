@@ -1,25 +1,21 @@
 extends layout
 block content
   h1= site.title
-  head
-    title User Form
+  div Author: #{author.name}
+  div Contact: #{author.contact}
+  
+  p= site.description
+  p= site.carbon
+  p= site.ledger
+  p= site.stampers
+  p= site.stamper_selection
 
-  body
-    p= site.description
-    p= site.carbon
-    p= site.ledger
-    p= site.stampers
-    p= site.stamper_selection
-
-    div Total Carbon (kg CO2e): 
-      span= tags
-    div Total Gold (certified carbon emisisons): 
-      span= gold
-    div Total 
-      a(href='/users') Users
-      span : #{users}
-    div Total 
-      a(href='/users/stampers') Stampers
-      span : #{stampers}
+  p
+    b Total Carbon (kg CO2e): #{tags}
+  p 
+    b Total Gold (certified carbon emisisons): #{gold}
+  a(href='/users') Total Users: #{users}
+  br
+  a(href='/users/stampers') Total Stampers: #{stampers}
 
   include search.pug

@@ -33,7 +33,7 @@ function MetaMask(contract){
     // Non-dapp browsers...
       browser = 'Non-Ethereum browser detected. You should consider trying MetaMask!'
       console.log(browser);
-      $('#metaMask').html('<h2>'+browser+'</h2>')
+      $('#metaMask').html('<h3>'+browser+'</h3>')
     } 
   })
   function getUserProfile(){
@@ -50,14 +50,22 @@ function MetaMask(contract){
           // If a counterparty address has been loaded
           // call the escrow form/data
           if($('#counterparty').length>0){
+            // Form to add counterparty as stamper
+            let stamperForm = document.querySelector('form[name=addStamper'+ $('#counterparty').attr("address")+']')
+            if(stamperForm!=null){stamperForm.onsubmit = addStamper}
             getEscrow()
           }
           document.querySelector('form[name=addCarbon]').onsubmit = addCarbon
 
-          let stamperForm = document.querySelector('form[name=addStamper]')
+          let stamperForm = document.querySelector('form[name=addStamper'+address+']')
+          let stampForm = document.querySelector('form[name=stamp]')
+
           if(stamperForm!=null){stamperForm.onsubmit = addStamper}
+          console.log(stampForm)
+          if(stampForm != null){stampForm.onsubmit = stamp}
+
         }
-        $('#metaMask').append('<h3>'+browser+'</h3>')
+        document.getElementById('metaMask').querySelector('h3').prepend(browser)
       },
       error: function(data) {
         console.log(data);
@@ -74,6 +82,7 @@ function MetaMask(contract){
   function getEscrow(){
     let receiverAddr = $('#counterparty').attr("address");
     $.ajax({
+      // ajax request to get escrow data (register or send txs)
       type: 'get',
       url: '/users/escrow/'+$('#counterparty').attr("address"),
       success: function(data){
@@ -94,7 +103,7 @@ function MetaMask(contract){
             var txID
             $.each(document.getElementsByClassName('confirmEscrow'), function(index, value) {
               txID = value.querySelector('input[name=escrowTxId]').value
-              console.log(txID)
+              //console.log(txID)
               value.onsubmit = function(event){
                 // store tx destination
                 event.destination = escrowAdrr;
@@ -140,7 +149,10 @@ function MetaMask(contract){
     event.txData = carboTag.methods['stampAdd'](stamper,true,stampRate,minPayment).encodeABI();
     return sendTx(event)
   }
-
+  function stamp(event){
+    event.txData = carboTag.methods['goldUpdate']().encodeABI();
+    return sendTx(event)
+  }
 
   let confirmed = {}
   function sendTx(event) {
@@ -157,7 +169,9 @@ function MetaMask(contract){
         //console.log(event)
         window.web3.eth.sendTransaction({from: address, to: event.destination, data: event.txData})
         .on('confirmation', function(confirmationNumber, receipt){ 
-          //console.log(receipt)
+          // set confirmed status of current form. 
+          // NOte security issue if form names are not unique.
+          // Can cause overwritting of confimration status preventing form from being submitted, or causing multiple sendTransaction requests!
           confirmed[event.target.name] = true
           event.path[0].submit()
         }).on('error', function(){

@@ -1,17 +1,15 @@
 block content
     if data.user.registered
-        h2
-            if data.user.address == current_user.address
-                div Your Meta Mask Wallet 
-            else
-                span Profile:   
-            span= data.user.name
-        div Wallet: 
-            span= data.user.address
-        div Tags: 
-            span= data.user.tag
-        div Gold: 
-            span= data.user.gold
+        if data.user.address == current_user.address
+            h2 Your Meta Mask Wallet 
+                span (#{data.user.name})
+                h3
+        else
+            h2 Profile: #{data.user.name}
+        ul
+            li Wallet: #{data.user.address}
+            li Tags: #{data.user.tag}
+            li Gold: #{data.user.gold}
             
         ul Stamper: 
             if data.stamper.exists
@@ -25,7 +23,6 @@ block content
                     span= data.stamper.laststamp
             else
                 span No
-        div
-            include carbon.pug
+        include carbon.pug
     else
-        div Wallet not registered
+        p Wallet not registered
