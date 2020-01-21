@@ -22,13 +22,16 @@ contract CarboTag {
     string name;   //Text Identifier
     int tag;      //Tag held
     uint gold;      //Gold held
-    address[] escrowList; //escrow addresses associated with each wallet
+  }
+  mapping (address => Attributes) public wallet;
+
+
+  mapping (address => address[]) escrowList; 
+  //escrow addresses associated with each wallet
     // Note this is additional data stored on the network
     // To help users keep track of the escrow accounts associated with their wallet
     // and check for exisitng transactions in each escrow
     // to minimze data storage we could store this data externally...
-  }
-  mapping (address => Attributes) public wallet;
 
   // TO-DO only store escrow tx data into the correspoinding multisig wallet 
   // within the encodeWithSignature data. Requires developing decoding routine 
@@ -47,10 +50,10 @@ contract CarboTag {
     int gold; // signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
   }
 
-  // store in mapping escrow address for a given address pair 
+  //mapping a given wallet address pair to escrow addres 
   mapping(address => mapping(address => address payable)) internal EscrowAddr;
 
-  // mapping to attributes for the external escrow address 
+  // mapping escrow address and transaction ID to escrow transaction attributes
   mapping(address => mapping(uint => EscrowTxAttr)) public escrowTx;
   mapping(address => uint) public escrowTxCount;
 

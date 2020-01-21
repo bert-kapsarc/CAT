@@ -1,0 +1,27 @@
+if data.user.registered
+    if data.user.address == current_user.address
+        h2 Your Meta Mask Wallet 
+            span (#{data.user.name})    
+    else
+        h2 Profile: #{data.user.name}
+    //p #[a(href='/escrows/'+data.user.address) Escrow List]
+    ul
+        li Wallet: #{data.user.address}
+        li Carbon: #{data.user.tag}
+        li CarboGold: #{data.user.gold}
+        
+    ul Stamper: 
+        if data.stamper.exists
+            li Active: 
+                span= data.stamper.active
+            li Stamp Rate: 
+                span= data.stamper.stamprate
+            li Min Payment: 
+                span= data.stamper.minpt
+            li Last Stamp: 
+                span= data.stamper.laststamp
+        else
+            span No
+    include _carbon.pug
+else
+    p Wallet not registered

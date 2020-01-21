@@ -14,4 +14,6 @@ VALUES  ('polluter', '0x2b9957466bc9e6b220ff3071925e5d3faef0b119');
 INSERT INTO users (name, wallet)
 VALUES  ('environmentalist', '0x889e90447cd5657283c35ec559587e16c779995e');
 INSERT INTO users (name, wallet)
-VALUES  ('environmentalist', '0x58eedbae12e5000de5d4500c07e6032edaa2c8a6');
+VALUES  ('stamper', '0x58eedbae12e5000de5d4500c07e6032edaa2c8a6');
+INSERT INTO users (name, wallet)
+VALUES  ('HeavyEmitter', '0xbC6D52c51C74B6C3A85a6357eB9822dE0D550Cf2');

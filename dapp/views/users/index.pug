@@ -1,7 +1,8 @@
-extends layout
+extends ../layout
 
 block content
-  h1= title
+  include _search.pug
+  h1 User Directory
   table(style='width:100%', border='1')
     tr
       th Name
@@ -13,4 +14,3 @@ block content
         td 
           a(href=('/users/'+user.wallet)) #{user.wallet}
 
-  include search.pug

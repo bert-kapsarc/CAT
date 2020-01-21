@@ -1,0 +1,17 @@
+extends layout
+block content
+  h2 Escrows
+  table(style='width:100%', border='1')
+    tr
+      th Counterparty
+      th Pending TXs
+      th Address
+    each escrow in data.escrows
+      if escrow.counterparties.length=1
+        tr
+          td #[a(href='users/'+escrow.counterparties[0].addresss) escrow.counterparties[0].name]
+          td= escrow.pending
+          td= escrow.address
+      else
+        // Their should be only one counterparty
+        Revise code for multiple counterparties

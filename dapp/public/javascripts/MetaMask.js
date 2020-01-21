@@ -1,5 +1,3 @@
-
-
 function MetaMask(contract){
   const web3 = new Web3(new Web3.providers.HttpProvider(contract.rpcURL))
   const carboTag = new web3.eth.Contract(contract.abi, contract.address)
@@ -12,8 +10,6 @@ function MetaMask(contract){
     // Legacy dapp browsers...
     else if (window.web3) {
       window.web3 = new Web3(web3.currentProvider);
-      // Acccounts always exposed
-      //web3.eth.sendTransaction({});
     }
     if(window.web3){
       browser = window.web3
@@ -65,14 +61,18 @@ function MetaMask(contract){
           }
           document.querySelector('form[name=addCarbon]').onsubmit = addCarbon
 
+          // form to add current address as stamper
           let stamperForm = document.querySelector('form[name=addStamper'+address+']')
           let stampForm = document.querySelector('form[name=stamp]')
 
           if(stamperForm!=null){stamperForm.onsubmit = addStamper}
           if(stampForm != null){stampForm.onsubmit = stamp}
 
+
+
         }
         document.getElementById('browser').append(browser)
+
       },
       error: function(data) {
         console.log(data);
@@ -91,7 +91,7 @@ function MetaMask(contract){
     $.ajax({
       // ajax request to get escrow data (register or send txs)
       type: 'get',
-      url: '/users/escrow/'+$('#counterparty').attr("address"),
+      url: '/users/'+$('#counterparty').attr("address")+'/escrow',
       success: function(data){
         $('#counterparty').append(data);
         let form = document.querySelector('form[name=createEscrow]')
