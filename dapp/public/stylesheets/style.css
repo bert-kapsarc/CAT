@@ -2,8 +2,8 @@ doctype style
 body {
   /*font-family: "Lucida Grande", Helvetica, Arial, sans-serif;*/
 }
-a,p,ul,li,button,input,label{
-    font-size: 1.1em;
+p,ul,button,input,label{
+    font-size: 1.2em;
 }
 p{ 
     text-align: justify;
@@ -11,5 +11,5 @@ p{
 }
 
 a {
-  color: #00B7FF;
+    color: #00B7FF;
 }

@@ -15,11 +15,8 @@ function MetaMask(contract){
       // Acccounts always exposed
       //web3.eth.sendTransaction({});
     }
-
     if(window.web3){
-      let networks=[]
       browser = window.web3
-
       getUserProfile()
       window.ethereum.on('accountsChanged', function (accounts) {
         getUserProfile()
@@ -37,7 +34,18 @@ function MetaMask(contract){
     } 
   })
   function getUserProfile(){
-    address = window.web3.currentProvider.selectedAddress
+    if(window.ethereum.isStatus){
+      window.ethereum.status
+      .getContactCode()
+      .then(data => {
+        console.log('Contact code:', data)
+      })
+      .catch(err => {
+        console.log('Error:', err)
+      })
+    }else{
+      address = window.web3.currentProvider.selectedAddress
+    }
     $.ajax({
       type: 'get',
       url: '/users/form/'+address,
@@ -61,11 +69,10 @@ function MetaMask(contract){
           let stampForm = document.querySelector('form[name=stamp]')
 
           if(stamperForm!=null){stamperForm.onsubmit = addStamper}
-          console.log(stampForm)
           if(stampForm != null){stampForm.onsubmit = stamp}
 
         }
-        document.getElementById('metaMask').querySelector('h3').prepend(browser)
+        document.getElementById('browser').append(browser)
       },
       error: function(data) {
         console.log(data);

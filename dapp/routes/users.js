@@ -19,6 +19,7 @@ router.param('address', async function(req, res, next, _address){
   req.data.user = await carboTag.callFn('wallet',_address)
   req.data.user.address = _address
   req.data.user.owner = await carboTag.callFn('owner',_address)
+  req.data.stamper = {}
   if(current_user.address!=null){
     let escrowAddr = await carboTag.callFn('findEscrowAddr',[req.data.user.address,current_user.address])  
     req.data.escrow = {address: escrowAddr}
@@ -34,8 +35,9 @@ router.param('address', async function(req, res, next, _address){
           await multiSigWallet.callFn('confirmations',[tx.multisig_tx_id,current_user.address])
       }
     }
+    req.data.stamper = await carboTag.callFn('stampRegister',current_user.address)
   }
-  req.data.stamper = await carboTag.callFn('stampRegister',_address)
+
   next();
 }); 
 
@@ -84,7 +86,6 @@ router.get('/form/:address', function (req, res) {
 
 router.post('/',async function (req, res) {
   const { name, address } = req.body
-  console.log(req.body)
   req.data = {}
   req.data.address = address
   req.data.user = await carboTag.callFn('wallet',address)
@@ -93,7 +94,8 @@ router.post('/',async function (req, res) {
   pool.query('INSERT INTO users (name, wallet) VALUES ($1, $2)', [name, address], error => {
     if (error) {
       throw error
-    }else{res.render('profile', {data: req.data})}
+    }
+    res.render('show', {data: req.data})
   })
 })
 .get('/escrow/:address', function (req, res) {

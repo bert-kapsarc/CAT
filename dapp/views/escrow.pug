@@ -13,8 +13,8 @@ if data.escrow.address != '0x0000000000000000000000000000000000000000'
     input(name = 'counterparty' type="hidden" value= data.user.address )
     button(type = 'submit') Send TX to #{data.user.name}
 
-else
-  form(action = "/users/"+data.user.address, method = 'GET', name='createEscrow')
+else if data.user.address != current_user.address
+  form(name='createEscrow')
     input(name = 'counterparty' type="hidden" value= data.user.address )
     button(type = 'submit') 
       h3 Open escrow with #{data.user.name}
