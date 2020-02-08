@@ -18,7 +18,10 @@ router.param('address', async function(req, res, next, _address){
   data.user = await carboTag.callFn('wallet',_address)
   data.user.address = _address
   data.user.owner = await carboTag.callFn('owner',_address)
-  data.stamper = await carboTag.callFn('stampRegister',_address)
+
+  data.stamper = await getStamperData(_address)
+
+
   if(current_user.address!=null){ 
     if(current_user.address != data.user.address){
       let escrowAddr = await carboTag.callFn('findEscrowAddr',[data.user.address,current_user.address])  
@@ -26,10 +29,12 @@ router.param('address', async function(req, res, next, _address){
       multiSigWallet = new Contract(contract.escrowAbi,escrowAddr)
       const txCount = await carboTag.callFn('escrowTxCount',escrowAddr)
       data.escrow.transactions = []
+      data.escrow.txCount = 0
       var tx
       for (i = 0; i < txCount; i++) {
         tx = await carboTag.callFn('escrowTx',[escrowAddr,i])
-        if(tx.exists){
+        if(tx.exists==true){
+          data.escrow.txCount += 1
           data.escrow.transactions[i] = tx
           data.escrow.transactions[i].confirmed = 
             await multiSigWallet.callFn('confirmations',[tx.multisig_tx_id,current_user.address])
@@ -42,6 +47,14 @@ router.param('address', async function(req, res, next, _address){
 
   next();
 }); 
+
+async function getStamperData(_address){
+  let _stamperAddr = await carboTag.callFn('stamperRegistry',_address)
+  stamperContract = new Contract(contract.stamperAbi,_stamperAddr)
+  let _stamper = await stamperContract.callFn('attributes')
+  _stamper.address = _stamperAddr
+  return(_stamper)
+}
 
 async function getUsers(result,query){
   const count = await carboTag.callFn('accountCount')
@@ -77,7 +90,7 @@ router.get('/stampers',async function (req, res) {
   data.user = await carboTag.callFn('wallet',address)
   if(data.user){
     data.user.address = address
-    data.stamper = await carboTag.callFn('stampRegister',address)
+    data.stamper = await getStamperData(address)
     res.render('users/show', {data: data})
   }else{
     res.render('error', { message: 'no user'})
@@ -108,10 +121,10 @@ router.post('/',async function (req, res) {
   console.log(address)
   data.user = await carboTag.callFn('wallet',address)
     
-  if(data.user){
+  if(data.user!='0x0000000000000000000000000000000000000000'){
     //when user has been created store address
     data.user.address = address
-    data.stamper = await carboTag.callFn('stampRegister',address)
+    data.stamper = await getStamperData(address)
     // insert into PG db if user registered to contract
     pool.query('INSERT INTO users (name, wallet) VALUES ($1, $2)', [data.user.name, address], error => {
       if (error) {

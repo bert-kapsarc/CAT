@@ -13,7 +13,7 @@ table(style='width:100%', border='1')
           form(class='confirmEscrow' name='confrimTx'+tx.multisig_tx_id)
             input(name = 'escrowTxId' type="hidden" value= tx.multisig_tx_id) 
             button(type = 'Submit') Confirm TX #{tx.multisig_tx_id}
-      td= tx.tag
+      td= tx.carbon
       td= tx.gold
       td= tx.issuer
 input(name = 'escrowAddr' type="hidden" value= data.escrow.address )  

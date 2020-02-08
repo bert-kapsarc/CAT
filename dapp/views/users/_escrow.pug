@@ -1,6 +1,6 @@
 if data.escrow.address != '0x0000000000000000000000000000000000000000'
   h3 Escrow Wallet Address: #{data.escrow.address}
-  if data.escrow.transactions.length>0
+  if data.escrow.txCount>0
     include _transactions.pug
     br
   form(action = "/users/"+data.user.address, method = 'GET', name='createTx')

@@ -41,7 +41,7 @@ module.exports = async (deployer) => {
         
         ,{
           "internalType": "int256",
-          "name": "tag",
+          "name": "carbon",
           "type": "int256"
         }
         ,{

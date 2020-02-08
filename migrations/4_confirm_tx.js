@@ -14,5 +14,5 @@ module.exports = async (deployer) => {
     console.log(await instance.wallet(accounts[0]));
 
     // create stamper
-    await instance.stampAdd(accounts[0], true, 1, 0, {from: accounts[0]});    
+    await instance.newStamper(accounts[0], 1, 0, {from: accounts[0]});    
 }

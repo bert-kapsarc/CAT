@@ -31,13 +31,17 @@ let abi = JSON.parse(fs.readFileSync(jsonFile)).abi;
 global.contract = {
    abi: abi,
    escrowAbi: JSON.parse(fs.readFileSync("../build/contracts/MultiSigWallet.json")).abi,
+   stamperAbi: JSON.parse(fs.readFileSync("../build/contracts/Stamper.json")).abi,
    address: process.env.CARBO_TAG_ADDR,
    rpcURL: process.env.INFURA_ROPSTEN
 }
 global.current_user = {address: null}; // address extracted from active metamask plugin
 
-// store carboTag contract as gloabl json object
-global.carboTag = new Contract(abi,process.env.CARBO_TAG_ADDR)
+// store carboTag contract as global json object
+global.carboTag = new Contract(abi,process.env.CARBO_TAG_ADDR);
+var MSWFactAbi = JSON.parse(fs.readFileSync("../build/contracts/MultiSigWalletFactory.json")).abi;
+let MSWFactAddr = await carboTag.callFn('factory_addr');
+global.mSWFactory = new Contranct(MSWFactAbi,MSWFactAddr);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');

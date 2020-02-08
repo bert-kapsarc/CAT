@@ -5,5 +5,5 @@ module.exports = async (deployer) => {
     let accounts = await web3.eth.getAccounts();
     let instance = await CarboTag.deployed();
     
-    console.log(await instance.stampRegister(accounts[0]));
+    console.log(await instance.stamperRegistry(accounts[0]));
 }

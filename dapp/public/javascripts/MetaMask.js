@@ -1,7 +1,7 @@
 function MetaMask(contract){
   const web3 = new Web3(new Web3.providers.HttpProvider(contract.rpcURL))
   const carboTag = new web3.eth.Contract(contract.abi, contract.address)
-  var address, browse, escrow
+  var address, browse, escrow, stamper
   window.addEventListener('load', async function() {
     if (window.ethereum) {
       window.web3 = new Web3(ethereum)  
@@ -66,7 +66,11 @@ function MetaMask(contract){
           let stampForm = document.querySelector('form[name=stamp]')
 
           if(stamperForm!=null){stamperForm.onsubmit = addStamper}
-          if(stampForm != null){stampForm.onsubmit = stamp}
+          if(stampForm != null){
+            var stamperAddr = document.querySelector('input[name=stamperAddr]')
+            stamper = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
+            stampForm.onsubmit = stamp
+          }
 
 
 
@@ -137,6 +141,7 @@ function MetaMask(contract){
     event.txData = carboTag.methods['createEscrow'](event.path[0].querySelector('input[name=counterparty]').value).encodeABI();
     return sendTx(event)
   }
+
   function createTx(event){
     const counterparty = event.path[0].querySelector('input[name=counterparty]').value
     const gold = event.path[0].querySelector('input[name=gold]').value
@@ -146,18 +151,18 @@ function MetaMask(contract){
   }
   function addCarbon(event){
     const carbon = event.path[0].querySelector('input[name=carbon]').value
-    event.txData = carboTag.methods['addTagToSelf'](carbon).encodeABI();
+    event.txData = carboTag.methods['addCarbon'](carbon).encodeABI();
     return sendTx(event)
   }
   function addStamper(event){
     const stamper = event.path[0].querySelector('input[name=stamper]').value
     const stampRate = event.path[0].querySelector('input[name=stampRate]').value
     const minPayment = event.path[0].querySelector('input[name=minPayment]').value
-    event.txData = carboTag.methods['stampAdd'](stamper,true,stampRate,minPayment).encodeABI();
+    event.txData = carboTag.methods['addStamper'](stamper,stampRate,minPayment).encodeABI();
     return sendTx(event)
   }
   function stamp(event){
-    event.txData = carboTag.methods['goldUpdate']().encodeABI();
+    event.txData = stamper.methods['stamp']().encodeABI();
     return sendTx(event)
   }
 

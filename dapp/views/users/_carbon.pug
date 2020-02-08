@@ -11,6 +11,7 @@ if !data.stamper.exists && current_user.owner
         button(type = 'submit') Submit       
 else if data.stamper.exists && current_user.address == data.user.address
     form(name = 'stamp')
+        input(name = 'stamperAddr' type="hidden" value=data.stamper.address )
         button(type = 'Submit') Stamp Carbon (carboGold)
 
 if current_user.address == data.user.address
