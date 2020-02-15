@@ -1,7 +1,37 @@
 doctype style
-body {
-  /*font-family: "Lucida Grande", Helvetica, Arial, sans-serif;*/
+
+:root {
+    --goldenRatio: 1.61803398875;
+    --goldenLong: (1/var(--goldenRatio));
+    --goldenShort: (1 - var(--goldenLong));
 }
+
+
+body {
+    /*font-family: "Lucida Grande", Helvetica, Arial, sans-serif;*/
+}
+.row.no-pad {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.row.no-pad > [class*='col-'] {
+  padding-right: 0;
+  padding-left: 0;
+}
+.content{
+    margin-top: 7.29%;
+    margin-right: 7.29%;
+    margin-bottom: 7.29%;
+    margin-left: 7.29%;
+}
+form{
+  padding: 2.13% 0px 2.13% 0px;
+}
+label{
+    min-width:14.6%
+}
+h2{font-size:1.5em !important;}
+h3{font-size:1.2em !important;}
 p,ul,button,input,label{
     font-size: 1.2em;
 }
@@ -12,4 +42,8 @@ p{
 
 a {
     color: #00B7FF;
+}
+
+span {
+    padding: 0px 5px 0px 5px;
 }

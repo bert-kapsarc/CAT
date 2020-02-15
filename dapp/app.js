@@ -35,13 +35,14 @@ global.contract = {
    address: process.env.CARBO_TAG_ADDR,
    rpcURL: process.env.INFURA_ROPSTEN
 }
+//let address = window.web3.currentProvider.selectedAddress //get address from metamask plugin
 global.current_user = {address: null}; // address extracted from active metamask plugin
 
 // store carboTag contract as global json object
 global.carboTag = new Contract(abi,process.env.CARBO_TAG_ADDR);
 var MSWFactAbi = JSON.parse(fs.readFileSync("../build/contracts/MultiSigWalletFactory.json")).abi;
-let MSWFactAddr = await carboTag.callFn('factory_addr');
-global.mSWFactory = new Contranct(MSWFactAbi,MSWFactAddr);
+let MSWFactAddr = carboTag.callFn('factory_addr');
+global.mSWFactory = new Contract(MSWFactAbi,MSWFactAddr);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');

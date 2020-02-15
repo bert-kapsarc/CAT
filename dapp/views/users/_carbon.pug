@@ -1,22 +1,6 @@
-if !data.stamper.exists && current_user.owner
-    h3 Register #{data.user.name} as Stamper
-    form(action = '/users/stamper/'+data.user.address, method = 'POST', name='addStamper'+data.user.address) 
-        label(for = 'stampRate') Stamp Rate :
-        input(name = 'stampRate' placeholder='stamp rate kg/s')
-        br
-        label(for = 'minPayment') Minimum Payment :
-        input(name = 'minPayment' placeholder='min payment $/kg')
-
-        input(name = 'stamper' type="hidden" value=data.user.address )
-        button(type = 'submit') Submit       
-else if data.stamper.exists && current_user.address == data.user.address
-    form(name = 'stamp')
-        input(name = 'stamperAddr' type="hidden" value=data.stamper.address )
-        button(type = 'Submit') Stamp Carbon (carboGold)
-
 if current_user.address == data.user.address
-    h3 Add Carbon to your wallet
     form(action = '/', method = 'GET', name='addCarbon')
+        label(for='addCarbon') Add Carbon to your wallet
         span
             //label(for = 'carbon') Carbon :
             input(name = 'carbon' placeholder='Kg CO2e')

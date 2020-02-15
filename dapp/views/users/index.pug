@@ -2,15 +2,17 @@ extends ../layout
 
 block content
   include _search.pug
-  h1 User Directory
+  h1 #{user_type.charAt(0).toUpperCase()+user_type.slice(1)} Directory
   table(style='width:100%', border='1')
     tr
       th Name
       th Address
-
+      th Stamper
+        
     each user in users
       tr
         td #{user.name}
         td 
           a(href=('/users/'+user.wallet)) #{user.wallet}
-
+        td add form
+          //include _stamper.pug

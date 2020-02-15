@@ -5,7 +5,7 @@ router.get('/', async function (req, res,) {
     res.render('index', { 
         carbon: await carboTag.callFn('totalCarbon'),
         gold: await carboTag.callFn('totalGold'),
-        users: await carboTag.callFn('accountCount'),
+        users: await carboTag.callFn('userCount'),
         stampers: await carboTag.callFn('stamperCount')
         //contract: require('../public/javascripts/contract'),
     })

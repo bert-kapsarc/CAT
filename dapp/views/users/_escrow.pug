@@ -1,19 +1,37 @@
-if data.escrow.address != '0x0000000000000000000000000000000000000000'
-  h3 Escrow Wallet Address: #{data.escrow.address}
+if data.escrow && data.escrow.address != '0x0000000000000000000000000000000000000000'
   if data.escrow.txCount>0
     include _transactions.pug
     br
   form(action = "/users/"+data.user.address, method = 'GET', name='createTx')
-    label(for = 'carbon') Send (+)/Receiv (-) carbon:
-    input(name = 'carbon' Value='')
-    br
-    label(for = 'gold') Send (+)/Receiv (-) gold:
-    input(name = 'gold' Value='')
+    div
+      label(for='createTx') Escrow with #{data.user.name} (#{data.escrow.address}):
+    //hr
+    div
+      label(for = 'carbon') Carbon:
+      input(name = 'carbon' Value='')
+    div
+      input(name='txCarbon'+data.escrow.address  id='sendCarbon'+data.escrow.address type='radio' checked=true value=1)
+      label(for='sendCarbon'+data.escrow.address) Send (your carbon balance: #{current_user.carbon})
+    div
+      input(name='txCarbon'+data.escrow.address id='receiveCarbon'+data.escrow.address type='radio' value=-1)
+      label(for='receiveCarbon'+data.escrow.address) Receive (their carbon balance: #{data.user.carbon})
+    hr
+    div
+      label(for='gold') Gold:
+      input(name = 'gold' Value='')
+    div 
+      input(name='txGold'+data.escrow.address id='sendGold'+data.escrow.address type='radio' checked=true value=1)
+      label(for='sendGold'+data.escrow.address) Send (your gold balance: #{current_user.gold})
+    div  
+      input(name='txGold'+data.escrow.address id='receiveGold'+data.escrow.address type='radio' value=-1)
+      label(for='receiveGold'+data.escrow.address) Receive (their gold balance: #{data.user.gold})
 
+
+    input(name = 'escrowAddr' type="hidden" value= data.escrow.address )
     input(name = 'counterparty' type="hidden" value= data.user.address )
     button(type = 'submit') Send TX to #{data.user.name}
 
-else if data.user.address != current_user.address
+else if data.user.address !== current_user.address
   form(name='createEscrow')
     input(name = 'counterparty' type="hidden" value= data.user.address )
     button(type = 'submit') 

@@ -1,8 +1,9 @@
 table(style='width:100%', border='1')
   tr
     th TX ID
-    th Carbon (KG CO2e)
+    th Carbon
     th Gold
+
     th Issuer
   each tx in data.escrow.transactions
     tr
@@ -10,10 +11,42 @@ table(style='width:100%', border='1')
         if tx.confirmed 
           span Waiting for Counterparty
         else
-          form(class='confirmEscrow' name='confrimTx'+tx.multisig_tx_id)
+          form(class='confirmEscrowTx' name='confrimTx'+tx.multisig_tx_id)
             input(name = 'escrowTxId' type="hidden" value= tx.multisig_tx_id) 
             button(type = 'Submit') Confirm TX #{tx.multisig_tx_id}
-      td= tx.carbon
-      td= tx.gold
-      td= tx.issuer
+          form(class='rejectEscrowTx' name='rejectTx'+tx.id)
+            input(name = 'txId' type="hidden" value= tx.id) 
+            button(type = 'Submit') Reject TX #{tx.multisig_tx_id}
+      if tx.issuer == current_user.address
+        td
+          if tx.carbon<0
+            span #{tx.carbon}*-1 (receive)
+          else if tx.carbon>0
+            span #{tx.carbon} (withdraw)
+          else
+            span None
+        td
+          if tx.gold<0
+            span #{tx.gold}*-1 (receive)
+          else if tx.gold>0
+            span #{tx.gold} (withdrawn)
+          else 
+            span None
+        
+      else
+        td
+          if tx.carbon<0
+            span #{tx.carbon}*-1 (withdraw)
+          else if tx.carbon>0
+            span #{tx.carbon} (receive)
+          else 
+            span None
+          if tx.gold<0
+            span #{tx.gold}*-1 (withdraw)
+          else if tx.gold>0
+            span #{tx.gold} (receive)
+          else 
+            span None
+      
+      td= tx.name
 input(name = 'escrowAddr' type="hidden" value= data.escrow.address )  

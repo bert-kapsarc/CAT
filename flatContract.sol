@@ -477,9 +477,225 @@ contract MultiSigWalletFactory is Factory {
     }
 }
 
+// File: contracts/Stamper.sol
+
+pragma solidity ^0.5.12;
+//import "./CarboTag.sol";
+
+contract Stamper {
+
+  attributes public stamper;
+
+  struct attributes {
+    address owner;
+    address payable parent; // parent address that created this contract (this should be the carboTag contract)
+    address nominator;
+    bool active;   //Is stamper active?
+    uint rate; //Rate of stamping speed
+    uint minpmt;    //Minimum accepted payment
+    uint last;  //time of last stamping
+    uint stamps;
+  }
+  // currently we do not track public vote addresses
+  int public publicVoteCount;  //public up/down votes
+  
+  mapping(uint => bool) public governorVote;     //governor votes
+  mapping(address => uint) public governorVoteIndex;
+  uint public governorVoteCount;
+
+  //Proposal Vote maps propsal index to proposalVoteIndex to vote state
+  mapping(uint => mapping(uint => bool)) public proposalVote;
+  //Proposal Vote maps propsal index to voter address to proposalVote Index
+  mapping(uint => mapping(address => uint)) public proposalVoteIndex;
+  uint public proposalCount;
+  mapping(uint => uint) public proposalVoteCount;
+  mapping(uint => proposalAttr) public proposal;
+
+  struct proposalAttr {
+    uint rate;
+    address origin; // who created this proposal;
+    uint timeApproved;
+  }
+  constructor(address target, address nominator, uint rate, uint minpmt) public {
+    stamper.owner = target;
+    stamper.parent = msg.sender;
+    stamper.nominator = nominator;
+    stamper.rate = rate;
+    stamper.minpmt = minpmt;
+    stamper.last = block.timestamp;
+    incrementProposal(nominator,rate);
+
+  }
+
+  modifier onlyStamper () {  //added some security
+    require(stamper.owner == msg.sender, "Only the stamper can access this function.");
+    _;
+  }
+  modifier notStamper () {  //added some security
+    require(stamper.owner != msg.sender, "THe stamp can not call this fn.");
+    _;
+  }
+  modifier onlyRegisteredWallets(){
+    (bool _registered) = CarboTag(stamper.parent).registered(msg.sender);
+    require(_registered == true, 'You are not a registered user of the parent accounting contract');
+    _;
+  }
+  modifier newGovernorVote(bool _vote){
+    require(governorVoteIndex[msg.sender]==0 || _vote != governorVote[governorVoteIndex[msg.sender]], '');
+    _;
+  }
+  modifier onlyGovernor(){
+    require(CarboTag(stamper.parent).governor(msg.sender), 'Only Governors can do that');
+    _;
+  }
+  modifier notApproved(uint _proposal){
+    require(proposal[_proposal].timeApproved == 0, 'Proposal has already been approved');
+    _;
+  }
+
+
+  function vote(bool _vote)
+    public
+    notStamper()
+    onlyRegisteredWallets()
+    newGovernorVote(_vote)
+  {
+    // governor voting
+    if(CarboTag(stamper.parent).governor(msg.sender)){
+      if(governorVoteIndex[msg.sender] == 0){
+        //start tracking votes from index 1. 
+        //index 0 is default value for governors that have not yet voted only
+        governorVoteIndex[msg.sender] = ++governorVoteCount;
+      }
+      governorVote[governorVoteIndex[msg.sender]] = _vote;
+      (uint yay,uint nay) = countGovernorVotes();
+      // if yay greater than nay and yay is at least 7 activate stamper
+      if(yay>nay && yay>6){
+          stamper.active = true;
+      }else{
+        stamper.active = false;
+      }
+    }else{
+      //increment public votes
+      //note that currently public can vote as many times as they see fit
+      // however public votes hold a very minor weight in the final activation process
+      if(_vote){
+        publicVoteCount++;
+      }else{
+        publicVoteCount--;
+      }
+    }
+  }
+
+  function countGovernorVotes()
+    view
+    public
+    returns(uint yay,uint nay)
+  {
+    for(uint i=1;i<=governorVoteCount;i++)
+      if(governorVote[i]){
+        yay ++;
+      }else{
+        nay ++;
+      }
+  }
+  function countProposalVotes(uint _proposal)
+    view
+    public
+    returns(uint yay,uint nay)
+  {
+    for(uint i=1;i<=proposalVoteCount[_proposal];i++)
+      if(proposalVote[_proposal][i]){
+        yay ++;
+      }else{
+        nay ++;
+      }
+  }
+
+  // TODO who controls stamper rate revisions
+  // should these vchanges be subject to vote approval
+  // shoul dcuurent stamper rate have an expiration and require voting renewal
+  // This needs to be developed ...
+  function proposeStamperRate(uint _rate) public onlyGovernor(){
+    incrementProposal(msg.sender,_rate);
+  }
+
+  function incrementProposal(address _voter, uint _rate) internal {
+    uint _index = ++proposalVoteIndex[proposalCount][msg.sender];
+    proposalVote[proposalCount][_index] = true;
+    proposal[proposalCount].rate = _rate;
+    proposal[proposalCount].origin = _voter;
+    setProposalVote(proposalCount++,_voter,true);
+  }
+
+  function voteForProposal(uint _proposal, bool _vote) 
+    public 
+    onlyGovernor()
+    notApproved(_proposal)
+  {
+    setProposalVote(_proposal,msg.sender,_vote);
+    (uint yay,uint nay) = countProposalVotes(_proposal);
+    // if yay greater than nay and yay is at least 7 activate stamper
+    if(yay>nay && yay>6){
+      proposal[_proposal].timeApproved = block.timestamp;
+      stamper.rate = proposal[_proposal].rate;
+    }
+  }
+
+  function setProposalVote(uint _proposal,address _voter,bool _vote) internal
+  {
+    if(proposalVoteIndex[_proposal][_voter] == 0){
+      //start tracking votes from index 1. 
+      //index 0 is default value vote index
+      proposalVoteIndex[_proposal][_voter] = ++proposalVoteCount[_proposal];
+    }
+    proposalVote[_proposal][proposalVoteIndex[_proposal][_voter]] = _vote;
+  }
+
+  function stamp() public 
+    onlyStamper()
+  {
+      // Some points to address
+      // Block timestamp can be manipulated by miners within 900s
+      // Make sure that this deos not distort the stamping rate within am acceptable tollerance
+      // Need to set other stamp constriants (total stamps based on auditing, or other metrics)
+
+      uint stamps = (block.timestamp-stamper.last)/stamper.rate;
+      stamper.stamps += stamps; 
+      CarboTag(stamper.parent).updateGold(stamps,stamper.owner);
+
+  }
+
+  function stampPmtAdjust(uint minpmt) public onlyStamper(){
+    stamper.minpmt = minpmt;
+  }
+}
+
 // File: contracts/CarboTag.sol
 
 pragma solidity ^0.5.12;
+
+
+
+library CarboTagLib {
+
+}
+
+contract oldCarboTag {
+  struct Attributes {  //basic wallet, minimum attributes
+    bool registered;
+    string name;   //Text Identifier
+    int carbon;      //Carbon held
+    uint gold;      //Gold held
+  }
+  uint public totalCarbon;   //metric for system carbon this can be negative
+  uint public totalGold;   //metric for system gold
+  address public factory_addr;
+  mapping (address => Attributes) public wallet;
+  mapping (address => bool) public registered; //Valid account?)
+  mapping (uint => address) public userIndex;  //So we can cycle through accounts easily
+  uint public userCount; //number of accounts
+}
 
 contract CarboTag {
     /*
@@ -487,34 +703,42 @@ contract CarboTag {
     */
   event EscrowFunded (address indexed sender, uint256 indexed value);
 
-
-  mapping (address => bool) public owner;
+  address public owner;
+  mapping (address => bool) public governor;
   address public factory_addr;
-  uint public accountCount; //number of accounts
-  uint public stamperCount; //number of stampers
-  uint public totalTag;   //metric for system tag this can be negative
-  uint public totalStamperTag; //metric for stamper tag this can be non-negative
+  uint public totalCarbon;   //metric for system carbon this can be negative
   uint public totalGold;   //metric for system gold
+  uint public totalStamperCarbon; //metric for stamper carbon this can be non-negative
   uint public totalStamperGold; //metric for stamper gold
   
   struct Attributes {  //basic wallet, minimum attributes
-    bool registered; //Valid account?
     string name;   //Text Identifier
-    int tag;      //Tag held
+    int carbon;      //Carbon held
     uint gold;      //Gold held
-    address[] escrowList; //escrow addresses associated with each wallet
+  }
+  mapping (address => Attributes) public wallet;
+  mapping (address => bool) public registered; //Valid account?)
+  //mapping a given wallet address pair to escrow address
+  mapping(address => mapping(address => address payable)) internal EscrowAddr;
+  mapping (address => address[]) public escrowList; // mapping user address to array of active escrows
+  function getEscrowList(address _address)
+      public
+      view
+      returns (address[] memory) 
+  {
+      return escrowList[_address];
+  }
+  //escrow addresses associated with each wallet
     // Note this is additional data stored on the network
     // To help users keep track of the escrow accounts associated with their wallet
     // and check for exisitng transactions in each escrow
     // to minimze data storage we could store this data externally...
-  }
-  mapping (address => Attributes) public wallet;
 
   // TO-DO only store escrow tx data into the correspoinding multisig wallet 
   // within the encodeWithSignature data. Requires developing decoding routine 
   // that will read fn/parameters stored in the external multisig wallet (true escrow)
-  // This will make the tag contract lighter
-  // For now laziliy store escrow tx data within the tag contract
+  // This will make the carbon contract lighter
+  // For now laziliy store escrow tx data within the carbon contract
   // rather than decoding the parameters using assembly (complex)... 
   struct EscrowTxAttr {
     
@@ -523,47 +747,41 @@ contract CarboTag {
     // Below attributes are stored as encoded bytes data in the external multisig wallet
     address issuer;
     //address receiver;
-    int tag; // signed integer tag transfer, (+) for send tag to receiver, (-) to request tag transfer to sender
+    int carbon; // signed integer carbon transfer, (+) for send carbon to receiver, (-) to request carbon transfer to sender
     int gold; // signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
   }
 
-  // store in mapping escrow address for a given address pair 
-  mapping(address => mapping(address => address payable)) internal EscrowAddr;
-
-  // mapping to attributes for the external escrow address 
+  // mapping escrow address and transaction ID to escrow transaction attributes
   mapping(address => mapping(uint => EscrowTxAttr)) public escrowTx;
   mapping(address => uint) public escrowTxCount;
 
-  //Split Stamper management into a separate struct
-  struct StampData {
-    bool exists;   //Has registered before
-    bool active;   //Is stamper active?
-    uint stamprate; //Rate of stamping speed
-    uint minpmt;    //Minimum accepted payment
-    uint laststamp;  //time of last stamping
-    int votes;      //up votes
-  }
-  mapping (address => StampData) public stampRegister;
-  // TODO we dont need to cycle through accounts or stampers, unless we want to 
-  // pull a directory of all registered wallets. This will increae the weight of the contract
-  mapping (uint => address) accountIndex;  //So we can cycle through accounts easily
-  mapping (uint => address) stamperIndex;  //So we can cycle through stampers easily
+  // This maps the account holders address to their stamper contract address
+  mapping (address => address) public stamperRegistry;
 
-  modifier onlyOwner () {    //added some security
-      require(owner[msg.sender] == true);
-      _;
-  }
-  modifier onlyStamper () {  //added some security
-    require(stampRegister[msg.sender].active == true, "Only stampers can access.");
+  // directory of all registered wallets. This will increae the weight of the contract
+  mapping (uint => address) public userIndex;  //So we can cycle through accounts easily
+  mapping (uint => address) public stamperIndex;  //So we can cycle through stampers easily
+  uint public userCount; //number of accounts
+  uint public stamperCount; //number of stampers
+
+  modifier onlyOwner () {  //added some security
+    require(msg.sender == owner, 'ONly the contract owner can do that');
     _;
   }
-  
+  modifier onlyGovernor () {    //added some governance
+    require(governor[msg.sender] == true);
+    _;
+  }
   modifier onlyMember () {  //added some security
-    require(wallet[msg.sender].registered == true, "You are not registered");
+    require(registered[msg.sender] == true, "You are not registered");
     _;
   }
   modifier onlyEscrow(address _sender, address _receiver) {  //added some security
     require(findEscrowAddr(_sender, _receiver) == msg.sender, "Can only call from Escrow contract");
+    _;
+  }
+  modifier onlyStamperContract(address _stamper) {  //added some security
+    require(stamperRegistry[_stamper] == msg.sender, "Can only call from Stamper Contract");
     _;
   }
   modifier escrowExists(address _sender, address _receiver){
@@ -580,6 +798,10 @@ contract CarboTag {
     require(findEscrowAddr(_sender, _receiver)==address(0x0), "Escrow already created");
     _;  
   }
+  modifier stamperDoesNotExsit(address _target){
+    require(stamperRegistry[_target]==address(0x0), "Stamper already registered.");
+    _;
+  }
   // out boolean if sender transfering gold out (+), or sender request to receive gold (-) 
   modifier sufficientGold(address _sender, address _receiver, int _gold){
     require(
@@ -590,27 +812,73 @@ contract CarboTag {
       , "Insufficient gold for this transfer");  
     _;
   }
-  constructor(address factory) public {
-     owner[msg.sender]=true;
-     factory_addr = factory;
+
+
+  constructor(address factory, address payable oldAddr) public {
+    owner = msg.sender;
+    governor[msg.sender]=true;
+    factory_addr = factory;
+    oldCarboTag oldContract = oldCarboTag(oldAddr);
+    userCount = oldContract.userCount();
+    //userCount = accounts.length;
+    totalCarbon = oldContract.totalCarbon();  //old name for carbon...
+    totalGold = oldContract.totalGold();
+    // reset stamper accounts in the new contract
+    // stamperCount = oldContract.stamperCount;
+    // totalStamperCarbon; //metric for stamper carbon this can be non-negative
+    // totalStamperGold; //metric for stamper gold
+    address _address;
+    //for (uint i=0; i<accounts.length; i++) {
+    //  _address = accounts[i];
+    for(uint i=0;i<userCount;i++) {
+      _address = oldContract.userIndex(i);
+      userIndex[i]=_address;
+      (bool _registered, string memory _name, int _carbon, uint _gold) = oldContract.wallet(_address);
+      registered[_address] = _registered;
+      wallet[_address].name = _name; 
+      wallet[_address].carbon = _carbon;
+      wallet[_address].gold = _gold; 
+      /*
+      TODO Carry over escrow from old contract addrr?
+      this is tricky because the MultiSigWallet escrrow include the old contract address 
+      as an owner to allow CarboTag to trigger the escrow
+      This will be easier when the escrow is not linked to this contract
+      such that createTransaction() fn is not longer user to create escrow txs
+      Instead txs will be created by directly calling MultiSigWallet (TODO)
+
+      address _escrowList = getEscrowList(_address) ;
+      for(uint j=0;j<_escrowList.length;j++) {
+        
+        (address[] _owners)=MultiSigWallet(_escrowList[j]).getOwners();
+        for(uint k=0;k<_owners.length;k++) {
+          if((_owners[k] != oldAddr || _owners[k]!=_address) && findEscrowAddr(_address, _escrowList[j])!=address(0x0))
+          {
+            EscrowAddr[_address][_owners[k]] = _escrowList[j];
+          }
+        }
+      } 
+      */  
+    }
   }
 
-  function() external payable {}
+  function() 
+    external payable 
+  {
+
+  }
     
-  function addOwner(address _target)  
+  function addGovernor(address _target)  
     public 
     onlyOwner()
   {
-    owner[_target]=true;
+    governor[_target]=true;
   }
 
   function signUp(string memory name) public{
-      require(wallet[msg.sender].registered != true, "ALREADY REGISTERED");
-      accountCount++;
-      accountIndex[accountCount]=msg.sender;
-      wallet[msg.sender].name = name;
-      wallet[msg.sender].registered = true;
-
+    require(registered[msg.sender]!= true, "ALREADY REGISTERED");
+    userIndex[userCount++]=msg.sender;
+    wallet[msg.sender].name = name;
+    registered[msg.sender] = true;
   }
 
   function findEscrowAddr(address _sender, address _receiver)  
@@ -641,26 +909,24 @@ contract CarboTag {
 
     _escrowAddr = address(MultiSigWalletFactory(factory_addr).create(_owners, _required));
     EscrowAddr[msg.sender][_receiver] = _escrowAddr;
-    wallet[msg.sender].escrowList.push(_escrowAddr);
-    wallet[_receiver].escrowList.push(_escrowAddr);
+    escrowList[msg.sender].push(_escrowAddr);
+    escrowList[_receiver].push(_escrowAddr);
   }
 
-  function stampPmtAdjust(uint minpmt) public onlyStamper(){
-      stampRegister[msg.sender].minpmt = minpmt;
-  }
 
-  function addTagToSelf(uint tag) public onlyMember(){
-    require(tag>0, 'Can only add positive tag');
-    wallet[msg.sender].tag += int(tag);
-    totalTag += tag;
-    if(stampRegister[msg.sender].exists == true){
-      totalStamperTag += tag;
+
+  function addCarbon(uint carbon) public onlyMember(){
+    require(carbon>0, 'Can only add positive carbon');
+    wallet[msg.sender].carbon += int(carbon);
+    totalCarbon += carbon;
+    if(stamperRegistry[msg.sender]!=address(0x0)){
+      totalStamperCarbon += carbon;
     }
   }
   // receiver: counterparty to the offer
-  // tag: signed integer tag transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
+  // carbon: signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
   // gold: signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
-  function createTransaction(address _receiver,int _tag, int _gold)
+  function createTransaction(address _receiver,int _carbon, int _gold)
     public 
     payable
     onlyMember()
@@ -670,32 +936,42 @@ contract CarboTag {
     if(_gold>0){
       wallet[msg.sender].gold -= uint(_gold); //remove (+) gold transfer from sender wallet
     }
-    if(_tag==0 && _gold>0){
+    if(_carbon==0 && _gold>0){
       // send the gold now if it is not combined with a debt transfer request 
       wallet[_receiver].gold += uint(_gold);
     }else{  
       // Store transaction in Escrow
-      address payable multisigAddr = findEscrowAddr(msg.sender, _receiver);
+      address payable _escrowAddr = findEscrowAddr(msg.sender, _receiver);
+      uint _txID;
+      for (uint i=0; i<=escrowTxCount[_escrowAddr]; i++){
+        if(!escrowTx[_escrowAddr][i].exists){
+          //if escrow tx does not exist set index as txID
+          _txID = i;
+          break;
+        }
+      }
+      if (_txID == escrowTxCount[_escrowAddr]){
+        // increment the TX count if necessary
+        escrowTxCount[_escrowAddr]++;
+      } 
       
-      
-      uint _txID = escrowTxCount[multisigAddr]++; //initialize next tx id
-      EscrowTxAttr storage _tx=escrowTx[multisigAddr][_txID];
+      EscrowTxAttr storage _tx=escrowTx[_escrowAddr][_txID];
       _tx.exists = true;
       _tx.issuer = msg.sender;
       //_tx.receiver = _receiver;
       _tx.gold = _gold; // store gold transfer for reference before approval by receiver
-      _tx.tag = _tag; // store tag transfer for reference before approval by receiver
+      _tx.carbon = _carbon; // store carbon transfer for reference before approval by receiver
       // encoded function for offerAccept to be triggered by multisig escrow wallet
-      bytes memory _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_tag,_gold); 
+      bytes memory _data = abi.encodeWithSignature("acceptTransaction(address,address,uint256,int256,int256)",msg.sender,_receiver,_txID,_carbon,_gold); 
       //address(this).call(_data);
       uint _value = msg.value;
-      _tx.multisig_tx_id = MultiSigWallet(multisigAddr).submitTransaction(address(this),_value, _data);
+      _tx.multisig_tx_id = MultiSigWallet(_escrowAddr).submitTransaction(address(this),_value, _data);
     }
   }
 
 
   //TO-DO add
-  function acceptTransaction(address _sender, address _receiver, uint _txID, int _tag, int _gold) 
+  function acceptTransaction(address _sender, address _receiver, uint _txID, int _carbon, int _gold) 
     external 
     payable
     onlyEscrow(_sender,_receiver)
@@ -707,12 +983,12 @@ contract CarboTag {
     //function call should match vlalues stored in Escrow Transaction
     //if we store all data in encodedFuncitonCall we dont need this
     require(_tx.exists == true, 'This transaction has been rejected');
-    require(_tag == _tx.tag, 'The tag transfer values do not match');
+    require(_carbon == _tx.carbon, 'The carbon transfer values do not match');
     require(_gold == _tx.gold, 'The gold transfer values do not match');
     require(_gold>=0 || (_gold<0 && uint(_gold)<=wallet[_receiver].gold), "Not enough gold to fullfill sender's ask");
 
-    wallet[_sender].tag -= _tag;
-    wallet[_receiver].tag += _tag;
+    wallet[_sender].carbon -= _carbon;
+    wallet[_receiver].carbon += _carbon;
     
     if(_tx.gold>0){// if sender has added gold to escrow
       wallet[_receiver].gold += uint(_gold); //pull gold from escrow, push to receiver
@@ -724,10 +1000,17 @@ contract CarboTag {
     //send funds to _sender ??
     //_sender.call.value(msg.value)("");
 
-    updateStamperTotals(_sender,_receiver,_gold,_tag);
+    updateStamperTotals(_sender,_receiver,_gold,_carbon);
 
     // Delete the escrow?
     delete escrowTx[_escrowAddr][_txID];
+    for (uint i=escrowTxCount[_escrowAddr]; i>0; i--)
+      //update TxCount if necessary
+      if(escrowTx[_escrowAddr][i].exists){
+        break;
+      }else{
+        escrowTxCount[_escrowAddr]=i-1;
+      }
   }
 
   function rejectTransaction(address _counterparty, uint _txID) 
@@ -735,91 +1018,77 @@ contract CarboTag {
     onlyMember()
     escrowTxExists(msg.sender,_counterparty,_txID)
   {
-    address payable multisigAddr = findEscrowAddr(msg.sender, _counterparty);
-    MultiSigWallet(multisigAddr).revokeConfirmation(_txID);
-    EscrowTxAttr storage _tx = escrowTx[multisigAddr][_txID];
+    address payable _escrowAddr = findEscrowAddr(msg.sender, _counterparty);
+    MultiSigWallet(_escrowAddr).revokeConfirmation(_txID);
+    EscrowTxAttr storage _tx = escrowTx[_escrowAddr][_txID];
     if(_tx.gold>0){// if sender has added gold to escrow
       wallet[_tx.issuer].gold += uint(_tx.gold); //return gold in escrow to issuers
     }
-    delete escrowTx[multisigAddr][_txID];
+    delete escrowTx[_escrowAddr][_txID];
   }
   
 
-  function stampAdd(address target, bool active, uint stamprate, uint minpmt) 
+  function addStamper(address target, uint stamprate, uint minpmt) 
     public 
-    onlyOwner()
+    // only contract governors can nominate stampers
+    onlyGovernor()
+    stamperDoesNotExsit(target)
 
   {
-    require(wallet[target].registered == true, "Target does not exist");
-    require(stampRegister[target].exists == false, "Stamper already registered.");
-    stamperCount++;    
-    stamperIndex[stamperCount]=target;
-    stampRegister[target].exists = true;
-    stampRegister[target].active = active;
-    stampRegister[target].stamprate = stamprate;
-    stampRegister[target].minpmt = minpmt;
-    stampRegister[target].laststamp = block.timestamp;
+    Stamper stamper = new Stamper(target,msg.sender,stamprate,minpmt);
+
+    stamperRegistry[target] = address(stamper);
+    stamperIndex[stamperCount++]=target;
     //sumTokens();
-    uint _tag; //tag to add to totalStamperTag
-    if(wallet[target].tag>0){
-      _tag = uint(wallet[target].tag); // only pass positive tag 
+    uint _carbon; //carbon to add to totalStamperCarbon
+    if(wallet[target].carbon>0){
+      _carbon = uint(wallet[target].carbon); // only pass positive carbon 
     }
-    totalStamperTag += uint(_tag);
+    totalStamperCarbon += uint(_carbon);
     totalStamperGold += wallet[target].gold;
   }
 
-  function stampEdit(address target, bool active, uint stamprate) public onlyOwner(){
-      require(stampRegister[target].exists == true, "Stamper not registered.");
-      stampRegister[target].active = active;
-      stampRegister[target].stamprate = stamprate;
-      //sumTokens();
+  function updateGold(uint stamps, address stamper)
+    public 
+    onlyStamperContract(stamper)
+  {
+    // Some points to address
+    // Block timestamp can be manipulated by miners within 900s
+    // Make sure that this deos not distort the stamping rate within am acceptable tollerance
+    // Need to set other stamp constriants (total stamps based on auditing, or other metrics)
+    uint carbon;// new carbon generated by stamper if stamps exceed carbons)
+    wallet[stamper].gold += stamps;
+    if(wallet[stamper].carbon>int(stamps)){
+      wallet[stamper].carbon -= int(stamps);
+    }else{
+      // Keeps stamper carbon from going negative
+      // Stamper wallet can not have negative debt after stamping ...(?)
+      wallet[stamper].carbon = 0;
+      totalCarbon += stamps;
+      // stamper creates new _carbon if it stamps more than it has carbon
+      carbon = stamps - uint(wallet[stamper].carbon);
+    } 
 
-
-      // TODO add/remove totalStampeRGold/tag for active/non-active wallets? 
-      /*
-      int _tag; //tag to add to totalStamperTag
-      if(wallet[target].tag>0){  // only pass positive tag
-        _tag = wallet[target].tag;
-      }
-      if(active){ //target address is active stamper - add positive tag and gold to totals  as receiver
-        updateStamperTotals(address(0x0),target,_tag,int(wallet[target].gold));
-      }else{ //target address is not active stamper - remove positive tag and gold from totals as sender
-        updateStamperTotals(target,address(0x0),_tag,int(wallet[target].gold));
-      }*/
-  }
-  function goldUpdate()public onlyStamper(){
-      // Some points to address
-      // Block timestamp can be manipulated by miners within 900s
-      // Make sure that this deos not distort the stamping rate within am acceptable tollerance
-      // Need to set other stamp constriants (total stamps based on auditing, or other metrics)
-
-      // Stampers are free to produce negative debt when stamping... 
-      uint stamps = (block.timestamp-stampRegister[msg.sender].laststamp)/stampRegister[msg.sender].stamprate;
-      wallet[msg.sender].gold += stamps;
-      if(wallet[msg.sender].tag>int(stamps)){wallet[msg.sender].tag -= int(stamps);}
-      else{wallet[msg.sender].tag = 0;} 
-      // Keeps tag from going negative
-      // Stamper wallet can not have ngative debt after stamping ...(?)
-
-      totalGold += stamps;
-      totalStamperGold += stamps;
-      totalStamperTag -= stamps;
+    totalGold += stamps;
+    totalCarbon += carbon - stamps;
+    totalStamperGold += stamps;
+    totalStamperCarbon += carbon - stamps;
   }
 
-  function updateStamperTotals(address _sender, address _receiver, int _tag, int _gold) internal{
+  function updateStamperTotals(address _sender, address _receiver, int _carbon, int _gold) internal{
     //why do we need to update/store these???
-    int8 _sign; // defines direction of tag/gold movements
+    int8 _sign; // defines direction of carbon/gold movements
     bool _stamper=false;
-    if(stampRegister[_sender].exists == true){
+    if(stamperRegistry[_sender]!= address(0x0)){
       _stamper = true;
       _sign = 1; // if stamper is sender values are sent out ( substract )
-    }if(stampRegister[_receiver].exists == true){
-      _stamper = !_stamper; //if both sender and receiver are stampers do nothing (no change in total gold/tag balance)
+    }if(stamperRegistry[_receiver]!= address(0x0)){
+      _stamper = !_stamper; //if both sender and receiver are stampers do nothing (no change in total gold/carbon balance)
       _sign = -1; // if stamper is receiver values are coming in (add)
     }
-    // note when tag/gold are negative these are asks by the sender and direction if flipped
+    // note when carbon/gold are negative these are asks by the sender and direction if flipped
     if(_stamper){
-      totalStamperTag -= uint(_sign*_tag);
+      totalStamperCarbon -= uint(_sign*_carbon);
       totalStamperGold -= uint(_sign*_gold);
     }
   }
@@ -854,28 +1123,33 @@ contract CarboTag {
           _transactionIds[i - from] = transactionIdsTemp[i];
   }
   
-
+/*
   function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
     // Commented this out as it would cost too much gas (now just a view function)
-    // instead wee update totalTag totalGold, etc... every time a relevant transaciton is sumitted/confirmed
-    uint totalTagx = 0;
+    // instead wee update totalCarbon totalGold, etc... every time a relevant transaciton is sumitted/confirmed
+    uint totalCarbonx = 0;
     uint totalGoldx = 0;
-    uint totalStamperTagx = 0;
+    uint totalStamperCarbonx = 0;
     uint totalStamperGoldx = 0;
-    for(uint i=0;i<=accountCount;i++)
+    for(uint i=0;i<=userCount;i++)
       {
-      totalTagx += uint(wallet[accountIndex[i]].tag);
-      totalGoldx += wallet[accountIndex[i]].gold;
+      totalCarbonx += uint(wallet[userIndex[i]].carbon);
+      totalGoldx += wallet[userIndex[i]].gold;
       }
     for(uint i=0;i<=stamperCount;i++)
       {
-      totalStamperTagx += uint(wallet[stamperIndex[i]].tag);
+      totalStamperCarbonx += uint(wallet[stamperIndex[i]].carbon);
       totalStamperGoldx += wallet[stamperIndex[i]].gold;
       }
-    return (totalTagx,totalGoldx,totalStamperTagx,totalStamperGoldx);
+    return (totalCarbonx,totalGoldx,totalStamperCarbonx,totalStamperGoldx);
   }
-
-
+*/
+  function changeOwner(address _newOwner)
+    onlyOwner()
+    public
+  {
+    owner = _newOwner;
+  }
   function killContract()
     onlyOwner()
     public
