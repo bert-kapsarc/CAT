@@ -16,7 +16,7 @@ else if data.stamper && current_user.address == data.user.address
 else if data.stamper
     form(name = 'stamperVote')
         input(name = 'stamperAddr' type="hidden" value=data.stamper.address )
-        label(for = 'voteFor'+data.stamper.address) Select to approve/reject stamper nomination
+        label(for = 'voteFor'+data.stamper.address) Vote to approve stamper nomination
         br
         span
             input(name = 'voteFor'+data.stamper.address id='yes'+data.stamper.address type='radio' checked=data.stamper.governorVote value='true')

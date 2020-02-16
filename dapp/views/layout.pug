@@ -1,21 +1,24 @@
 doctype html
 html
   head
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
     title= site.title
     link(rel='stylesheet', href='/stylesheets/style.css')
     link(href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css", rel="stylesheet", integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh", crossorigin="anonymous")
-    script(src="https://code.jquery.com/jquery-3.1.0.min.js")
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js")
+    script(src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js")
     script(src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.34/dist/web3.min.js")
     script(src="/javascripts/MetaMask.js")
     script.
         MetaMask(!{JSON.stringify(contract)})
   body
-    div(class="navBar")
-        a(href='/') Home
+    include _navbar.pug
     div(class="content")
+        
         p(id='browser')
-        block content
-
-        hr
         div(id='metaMask')
+        hr
+        block content
+        hr
+
         

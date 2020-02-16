@@ -19,10 +19,16 @@ body {
   padding-left: 0;
 }
 .content{
-    margin-top: 7.29%;
-    margin-right: 7.29%;
-    margin-bottom: 7.29%;
-    margin-left: 7.29%;
+    margin-top: 7.29vh;
+    margin-right: 7.29vw;
+    margin-bottom: 7.29vh;
+    margin-left: 7.29vw;
+}
+.receive{
+  color: green;
+}
+.withdraw{
+  color: red;
 }
 form{
   padding: 2.13% 0px 2.13% 0px;
@@ -30,14 +36,12 @@ form{
 label{
     min-width:14.6%
 }
-h2{font-size:1.5em !important;}
-h3{font-size:1.2em !important;}
-p,ul,button,input,label{
-    font-size: 1.2em;
-}
+
 p{ 
     text-align: justify;
-    max-width: 700px;
+    max-width: 900px;
+    overflow-y: hidden;
+    overflow-y: scroll;
 }
 
 a {
