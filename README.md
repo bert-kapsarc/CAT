@@ -1,4 +1,4 @@
-# CarboDebt conract directory.
+# SACAT conract directory.
 
 A smart contract and dApp for tracking emission responsibilities associated with the consumption of hydrocarbon resources. 
 

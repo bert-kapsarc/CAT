@@ -21,7 +21,7 @@ const fs = require('fs');
 var jsonFile = "../build/contracts/CarboTag.json";
 global.site = 
 {
-    title: 'CarboTag'
+    title: 'SACAT'
 }
 global.author = {
     name: 'Bertrand Rioux',
