@@ -25,7 +25,7 @@ function MetaMask(contract){
       }
     }else{
     // Non-dapp browsers...
-      browser = 'Your browser is not connected to Ethereum. Try <a href="https://metamask.io/"> MetaMask </a> to setup an account with CarboTag.'
+      browser = 'Your browser is not connected to Ethereum. Try <a href="https://metamask.io/"> MetaMask </a> to setup an account with SACAT.'
       //$('#metaMask').html('<h3>'+browser+'</h3>')
     } 
     $('#browser').append(browser)
