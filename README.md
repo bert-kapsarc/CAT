@@ -21,14 +21,14 @@ npm install -g truffle
 ```
 npm install -g ganache-cli
 ```
-* [Or use the Gnache Gui](https://www.trufflesuite.com/docs/ganache/quickstart) 
+[Or use the Gnache Gui](https://www.trufflesuite.com/docs/ganache/quickstart) 
 
 
 ## Installing
 
 ### Blockcahin (local)
 
-TO quickly run a local blockchain with CarboTag contract
+To run a local blockchain with SACAT contract library
 
 ```
 chmod u+x run.sh 
@@ -38,6 +38,8 @@ chmod u+x run.sh
 ```
 
 ### Web API (local)
+
+This is to run locally the API to access a version of the SACAT contract library (see build/) deployed to the Ethereum Ropsten testnet. The neccessary enviroment varibles are stored in /.env. Note these are public variables of the dapp, do not store private keys or sensative info here.
 
 ```
 npm install 
