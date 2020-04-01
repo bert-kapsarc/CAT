@@ -109,20 +109,20 @@ function MetaMask(contract){
           if(escrowAddr!==null){
             escrowAddr = escrowAddr.value
             let escrow = new web3.eth.Contract(contract.escrowAbi,escrowAddr)
-            var txID
-            $.each(document.getElementsByClassName('confirmEscrowTx'), function(index, value) {
-              txID = value.escrowTxId
-              if(escrowAddr!==null){value.onsubmit = function(event){
+            $.each(document.getElementsByClassName('confirmEscrowTx'), function(index, element) {
+              let txId = element.escrowTxId.value
+              console.log(escrowAddr)
+              if(escrowAddr!==null){element.onsubmit = function(event){
                 // store tx destination
-                event.destination = escrowAddr.value;
-                event.txData = escrow.methods['confirmTransaction'](txID).encodeABI();
+                event.destination = escrowAddr;
+                event.txData = escrow.methods['confirmTransaction'](txId).encodeABI();
                 return sendTx(event)
               }}
             });
-            $.each(document.getElementsByClassName('rejectEscrowTx'), function(index, value) {
-              txID = value.txId
-              if(escrowAddr!==null){value.onsubmit = function(event){
-                event.txData = carboTag.methods['rejectTransaction'](counterpartyAddr,txID).encodeABI();
+            $.each(document.getElementsByClassName('rejectEscrowTx'), function(index, element) {
+              let txId = element.txId.value
+              if(escrowAddr!==null){element.onsubmit = function(event){
+                event.txData = carboTag.methods['rejectTransaction'](counterpartyAddr,txId).encodeABI();
                 return sendTx(event)
               }}
             });
@@ -147,7 +147,6 @@ function MetaMask(contract){
       }
     }
   }
-
 
   function stamperVote(event){
     let stamperAddr = event.path[0].querySelector('input[name=stamperAddr]').value 
