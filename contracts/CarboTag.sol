@@ -169,7 +169,7 @@ contract CarboTag {
       this is tricky because the MultiSigWallet escrrow include the old contract address 
       as an owner to allow CarboTag to trigger the escrow
       This will be easier when the escrow is not linked to this contract
-      such that createTransaction() fn is not longer user to create escrow txs
+      such that createTransaction() fn is no longer used to create escrow txs
       Instead txs will be created by directly calling MultiSigWallet (TODO)
 
       address _escrowList = getEscrowList(_address) ;

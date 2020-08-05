@@ -39,14 +39,14 @@ table(style='width:100%', border='1')
       else
         td
           if tx.carbon<0
-            span #{tx.carbon}*-1 (withdraw)
+            span #{tx.carbon*-1} (withdraw)
           else if tx.carbon>0
             span #{tx.carbon} (receive)
           else 
             span None
         td
           if tx.gold<0
-            span #{tx.gold}*-1 (withdraw)
+            span #{tx.gold*-1} (withdraw)
           else if tx.gold>0
             span #{tx.gold} (receive)
           else 

@@ -55,7 +55,7 @@ contract Stamper {
     _;
   }
   modifier notStamper () {  //added some security
-    require(stamper.owner != msg.sender, "THe stamp can not call this fn.");
+    require(stamper.owner != msg.sender, "The stamper can not call this fn.");
     _;
   }
   modifier onlyRegisteredWallets(){

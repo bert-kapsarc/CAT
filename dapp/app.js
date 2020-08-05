@@ -3,7 +3,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const multer = require('multer')
-const upload = multer();
+const upload = multer()
+const env = require('dotenv').config()
 /*const helmet = require('helmet')
 const compression = require('compression')
 const rateLimit = require('express-rate-limit')
@@ -34,6 +35,7 @@ global.contract = {
    stamperAbi: JSON.parse(fs.readFileSync("../build/contracts/Stamper.json")).abi,
    address: process.env.CARBO_TAG_ADDR,
    rpcURL: process.env.INFURA_ROPSTEN
+
 }
 //let address = window.web3.currentProvider.selectedAddress //get address from metamask plugin
 global.current_user = {address: null}; // address extracted from active metamask plugin

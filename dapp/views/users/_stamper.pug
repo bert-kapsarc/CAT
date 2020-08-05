@@ -22,13 +22,13 @@ else if data.stamper
             input(name = 'voteFor'+data.stamper.address id='yes'+data.stamper.address type='radio' checked=data.stamper.governorVote value='true')
             label(for='yes'+data.stamper.address) Yes
         span
-            input(name = 'voteFor'+data.stamper.address id='no'+data.stamper.address type='radio' checked=!data.stamper.governorVote value='false')
-        
+            input(name = 'voteFor'+data.stamper.address id='no'+data.stamper.address type='radio' checked=!data.stamper.governorVote value='false')        
             label(for='no'+data.stamper.address) No
         button(type = 'Submit') Submit Vote 
-        p Total Votes 
+        p Total votes (governors)
             span Yes: #{data.stamper.yay}
-            span No: #{data.stamper.nay}        
+            span No: #{data.stamper.nay}   
+        p Public votes (+) yes, (-) no : #{data.stamper.publicVotes}      
         if false && data.stamper.governorVote!= null
             p My Vote: 
                 if data.stamper.governorVote

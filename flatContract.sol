@@ -495,6 +495,8 @@ contract Stamper {
     uint minpmt;    //Minimum accepted payment
     uint last;  //time of last stamping
     uint stamps;
+    uint yayCount; //number of yes votes
+    uint nayCount; //number of no votes
   }
   // currently we do not track public vote addresses
   int public publicVoteCount;  //public up/down votes
@@ -515,6 +517,8 @@ contract Stamper {
     uint rate;
     address origin; // who created this proposal;
     uint timeApproved;
+    uint yayCount; //number of yes votes
+    uint nayCount; //number of no votes
   }
   constructor(address target, address nominator, uint rate, uint minpmt) public {
     stamper.owner = target;
@@ -599,6 +603,9 @@ contract Stamper {
         nay ++;
       }
   }
+  //TODO recounting the total number of votes is computationally expensive (looping)
+  // instead we should store the total number of votes (yay/nay)
+  // and update them conditionally when a new/revised vote is submitted 
   function countProposalVotes(uint _proposal)
     view
     public
@@ -683,7 +690,7 @@ library CarboTagLib {
 
 contract oldCarboTag {
   struct Attributes {  //basic wallet, minimum attributes
-    bool registered;
+    //bool registered;
     string name;   //Text Identifier
     int carbon;      //Carbon held
     uint gold;      //Gold held
@@ -833,11 +840,12 @@ contract CarboTag {
     for(uint i=0;i<userCount;i++) {
       _address = oldContract.userIndex(i);
       userIndex[i]=_address;
-      (bool _registered, string memory _name, int _carbon, uint _gold) = oldContract.wallet(_address);
-      registered[_address] = _registered;
+      (string memory _name, int _carbon, uint _gold) = oldContract.wallet(_address);
+      
       wallet[_address].name = _name; 
       wallet[_address].carbon = _carbon;
       wallet[_address].gold = _gold; 
+      registered[_address] = oldContract.registered(_address);
       /*
       TODO Carry over escrow from old contract addrr?
       this is tricky because the MultiSigWallet escrrow include the old contract address 

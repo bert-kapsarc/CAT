@@ -61,20 +61,24 @@ router.param('address', async function(req, res, next, _address){
 
 async function getStamperData(_address){
   let _stamperAddr = await carboTag.callFn('stamperRegistry',_address)
+  
   if(_stamperAddr!=0x0000000000000000000000000000000000000000){
+    //console.log(current_user)
     stamperContract = new Contract(contract.stamperAbi,_stamperAddr)
     let _stamper = await stamperContract.callFn('stamper')
     _stamper.address = _stamperAddr
     let votes = await stamperContract.callFn('countGovernorVotes')
-    console.log(votes.nay)
+    //console.log(votes.nay)
     _stamper.yay = votes.yay
     _stamper.nay = votes.nay
-    if(current_user!=null && current_user.address!=0x0000000000000000000000000000000000000000){
+    _stamper.publicVotes = await stamperContract.callFn('publicVoteCount')
+    //console.log(_stamper.publicVotes)
+    if(current_user!=null && current_user.address!=null){
       let _voteIndex = await stamperContract.callFn('governorVoteIndex', current_user.address)
       _stamper.governorVote  = await stamperContract.callFn('governorVote', _voteIndex)
-      console.log(_stamper)
-      return(_stamper)
+      //console.log(_stamper)
     }
+    return(_stamper)
   } 
 }
 

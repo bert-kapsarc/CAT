@@ -36,7 +36,7 @@ These are instructions for interacting with the Beta version of CarboDebt hosted
 * once escrow is created use findEscrowAddr view function to get the new MultiSigWallet address. Inputs are your address and the \_receiver address
 
 
-* Slelect the MultiSigWallet contract from the drop down list and using the At Address button to load the external escrow contract
+* Select the MultiSigWallet contract from the drop down list and using the At Address button to load the external escrow contract
 
 * This contract is use to confirm transactions.
 
