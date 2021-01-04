@@ -6,8 +6,14 @@ library CarboTagLib {
 
 }
 
+/// @title Old contract for backward compatibility.
+/// @author Bertrand Williams-Rioux
+/// @notice Not to be used directly. Only used by "CarboTag" contract.
+/// @dev <document-me>
+
 contract oldCarboTag {
-  struct Attributes {  //basic wallet, minimum attributes
+  struct Attributes {  
+    //basic wallet, minimum attributes
     //bool registered;
     string name;   //Text Identifier
     int carbon;      //Carbon held
@@ -21,6 +27,11 @@ contract oldCarboTag {
   mapping (uint => address) public userIndex;  //So we can cycle through accounts easily
   uint public userCount; //number of accounts
 }
+
+/// @title Contract which executes trade between 2 entities via escrow.
+/// @author Bertrand Williams-Rioux
+/// @notice You can use this contract for transacting carbon credits.
+/// @dev <docment-me>
 
 contract CarboTag {
     /*
@@ -218,6 +229,11 @@ contract CarboTag {
       _escrow = EscrowAddr[_receiver][_sender];
     }
   }
+
+    /// @author Bert
+    /// @dev create a escrow account with you and the receiver
+    /// @param _receiver The receiver account
+    /// @return Escrow Address
 
   function createEscrow(address _receiver)//, uint _value) 
     public
