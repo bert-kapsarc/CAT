@@ -1,10 +1,10 @@
 const NODE_DIR     = "node_modules";
 const INPUT_DIR    = "./contracts";
-const CONFIG_DIR   = "./docgen";
-const OUTPUT_DIR   = "./docgen/docs";
-const README_FILE  = "./docgen/README.md";
-const SUMMARY_FILE = "./docgen/SUMMARY.md";
-const EXCLUDE_FILE = "./docgen/exclude.txt";
+const CONFIG_DIR   = "./docs/docgen";
+const OUTPUT_DIR   = "./docs/docgen/docs";
+const README_FILE  = "./docs/docgen/README.md";
+const SUMMARY_FILE = "./docs/docgen/SUMMARY.md";
+const EXCLUDE_FILE = "./docs/docgen/exclude.txt";
 
 const fs        = require("fs");
 const path      = require("path");
