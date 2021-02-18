@@ -1,5 +1,11 @@
 # `Factory`
 
+<document-me>
+
+Factory to instantiate the contract.
+
+Factory to instantiate the contract.
+
 # Functions:
 
 - [`getInstantiationCount(address creator)`](#Factory-getInstantiationCount-address-)
