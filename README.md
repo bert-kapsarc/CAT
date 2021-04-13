@@ -1,6 +1,6 @@
-# SACAT conract directory.
+# CAT contract directory.
 
-A smart contract and dApp for tracking emission responsibilities associated with the consumption of hydrocarbon resources. 
+A smart contract and dApp for tracking emission responsibilities associated with the consumption of hydrocarbon resources. The Carbon Accounting Token.
 
 ## Getting Started
 
