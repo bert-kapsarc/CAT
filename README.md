@@ -39,7 +39,7 @@ chmod u+x run.sh
 
 ### Web API (local)
 
-This is to run locally the API to access a version of the SACAT contract library (see build/) deployed to the Ethereum Ropsten testnet. The neccessary enviroment varibles are stored in /.env. Note these are public variables of the dapp, do not store private keys or sensitive info here.
+This is to run locally the API to access a version of the CAT contract library (see build/) deployed to the Ethereum Ropsten testnet. The neccessary enviroment varibles are stored in /.env. Note these are public variables of the dapp, do not store private keys or sensitive info here.
 
 ```
 npm install 
