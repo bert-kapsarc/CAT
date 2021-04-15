@@ -104,15 +104,35 @@ Contract which executes trade between 2 entities via escrow.
 
 # createTransaction
 
-##No description
+##Create a transaction request to transfer carbon using escrow.
 
 ### `createTransaction(address _receiver, int256 _carbon, int256 _gold)` {#CarboTag-createTransaction-address-int256-int256-}
 
+## Parameters:
+
+- `_receiver`: counterparty to the offer
+
+- `_carbon`: signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+
+- `_gold`: signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+
 # acceptTransaction
 
-##No description
+##Accept a pending transaction in escrow.
 
 ### `acceptTransaction(address _sender, address _receiver, uint256 _txID, int256 _carbon, int256 _gold)` {#CarboTag-acceptTransaction-address-address-uint256-int256-int256-}
+
+## Parameters:
+
+- `_sender`: sender
+
+- `_receiver`: receiver
+
+- `_txID`: Transaction ID 
+
+- `_carbon`: signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+
+- `_gold`: signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
 
 # rejectTransaction
 

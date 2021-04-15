@@ -1,5 +1,10 @@
 pragma solidity ^0.5.12;
 
+/// @title Factory to instantiate the contract.
+/// @author Bertrand Williams-Rioux
+/// @notice Factory to instantiate the contract.
+/// @dev <document-me>
+
 contract Factory {
 
     /*

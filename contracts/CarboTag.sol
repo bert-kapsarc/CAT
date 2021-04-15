@@ -6,10 +6,10 @@ library CarboTagLib {
 
 }
 
-/// @title Old contract for backward compatibility.
-/// @author Bertrand Williams-Rioux
-/// @notice Not to be used directly. Only used by "CarboTag" contract.
-/// @dev <document-me>
+  /// @title Old contract for backward compatibility.
+  /// @author Bertrand Williams-Rioux
+  /// @notice Not to be used directly. Only used by "CarboTag" contract.
+  /// @dev <document-me>
 
 contract oldCarboTag {
   struct Attributes {  
@@ -265,9 +265,13 @@ contract CarboTag {
       totalStamperCarbon += carbon;
     }
   }
-  // receiver: counterparty to the offer
-  // carbon: signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
-  // gold: signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender
+
+  /** @dev Create a transaction request to transfer carbon using escrow.
+  * @param _receiver counterparty to the offer
+  * @param _carbon signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+  * @param _gold signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+  */
+
   function createTransaction(address _receiver,int _carbon, int _gold)
     public 
     payable
@@ -312,7 +316,13 @@ contract CarboTag {
   }
 
 
-  //TO-DO add
+  /** @dev Accept a pending transaction in escrow.
+  * @param _sender sender
+  * @param _receiver receiver
+  * @param _txID Transaction ID 
+  * @param _carbon signed integer carbon transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+  * @param _gold signed integer gold transfer, (+) for send gold to receiver, (-) to request gold transfer to sender.
+  */
   function acceptTransaction(address _sender, address _receiver, uint _txID, int _carbon, int _gold) 
     external 
     payable
@@ -355,6 +365,10 @@ contract CarboTag {
       }
   }
 
+  /** @dev Reject a transaction.
+  * @param _counterparty The counterparty
+  * @param _txID Transaction ID 
+  */
   function rejectTransaction(address _counterparty, uint _txID) 
     public
     onlyMember()
@@ -444,7 +458,13 @@ contract CarboTag {
   {
     return(escrowTx[_escrowAddr][_txID].multisig_tx_id);
   }
-  // Function to return all existing escrow txs.
+
+  /** @dev Function to return all existing escrow transactions between 2 entities.
+  * @param _escrowAddr The counterparty
+  * @param from Initiator 
+  * @param to Receiver 
+  */
+
   function getTransactionIds(address _escrowAddr, uint from, uint to)
       public
       view
