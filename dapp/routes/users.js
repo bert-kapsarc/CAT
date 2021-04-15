@@ -29,7 +29,7 @@ router.param('address', async function(req, res, next, _address){
     if(current_user.address != data.user.address){
       let escrowAddr = await carboTag.callFn('findEscrowAddr',[data.user.address,current_user.address])  
       data.escrow = {address: escrowAddr}
-      multiSigWallet = new Contract(contract.escrowAbi,escrowAddr)
+      multiSigWallet = new Contract(contracts.escrowAbi,escrowAddr)
       const txCount = await carboTag.callFn('escrowTxCount',escrowAddr)
       data.escrow.transactions = []
       data.escrow.txCount = 0
@@ -64,7 +64,7 @@ async function getStamperData(_address){
   
   if(_stamperAddr!=0x0000000000000000000000000000000000000000){
     //console.log(current_user)
-    stamperContract = new Contract(contract.stamperAbi,_stamperAddr)
+    stamperContract = new Contract(contracts.stamperAbi,_stamperAddr)
     let _stamper = await stamperContract.callFn('stamper')
     _stamper.address = _stamperAddr
     let votes = await stamperContract.callFn('countGovernorVotes')

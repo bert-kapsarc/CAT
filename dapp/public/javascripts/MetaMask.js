@@ -1,6 +1,9 @@
 function MetaMask(contract){
-  const web3 = new Web3(new Web3.providers.HttpProvider(contract.rpcURL))
-  const carboTag = new web3.eth.Contract(contract.abi, contract.address)
+  const web3 = new Web3(new Web3.providers.HttpProvider(contracts.rpcURL))
+  // TO-DO why not call the global.carboTag JSON object (see app.js) instead of invocing contract again using web3?
+  const carboTag = new web3.eth.Contract(contracts.carboTagAbi, contracts.carboTagAddr)
+  const COG = new web3.eth.Contract(contracts.COGAbi,contracts.COGaddr)
+  const stamperFactory = new web3.eth.Contract(contracts.stamperFactoryAbi,contracts.stamperFactoryAddr)
   var address, browse, stamperForms={}
   window.addEventListener('load', async function() {
     if (window.ethereum) {
@@ -108,7 +111,7 @@ function MetaMask(contract){
           var escrowAddr = txForm.escrowAddr
           if(escrowAddr!==null){
             escrowAddr = escrowAddr.value
-            let escrow = new web3.eth.Contract(contract.escrowAbi,escrowAddr)
+            let escrow = new web3.eth.Contract(contracts.escrowAbi,escrowAddr)
             $.each(document.getElementsByClassName('confirmEscrowTx'), function(index, element) {
               let txId = element.escrowTxId.value
               console.log(escrowAddr)
@@ -150,7 +153,7 @@ function MetaMask(contract){
 
   function stamperVote(event){
     let stamperAddr = event.path[0].querySelector('input[name=stamperAddr]').value 
-    let stamperContract = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
+    let stamperContract = new web3.eth.Contract(contracts.stamperAbi,stamperAddr)
     //event.txData = carboTag.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
     let radios = document.getElementsByName('voteFor'+stamperAddr)
     let vote = getRadioValue(radios)
@@ -195,7 +198,7 @@ function MetaMask(contract){
   }
   function stamp(event){
     let stamperAddr = event.path[0].querySelector('input[name=stamperAddr]').value
-    let stamperContract = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
+    let stamperContract = new web3.eth.Contract(contracts.stamperAbi,stamperAddr)
     event.txData = stamperContract.methods['stamp']().encodeABI();
     event.destination = stamperAddr
     return sendTx(event)
@@ -206,7 +209,7 @@ function MetaMask(contract){
     //console.log(confirmed)
     if(event.destination==null){
       // default destination carboTag contract for majority of calls
-      event.destination = contract.address
+      event.destination = contracts.carboTagAddr
     }
     if(confirmed[event.target.name]){
       confirmed[event.target.name] = false

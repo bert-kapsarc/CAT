@@ -19,7 +19,6 @@ var cookieParser = require('cookie-parser');
 const Contract = require('./public/javascripts/contract');
 const fs = require('fs');
 
-var jsonFile = "../build/contracts/CarboTag.json";
 global.site = 
 {
     title: 'SACAT'
@@ -28,12 +27,16 @@ global.author = {
     name: 'Bertrand Rioux',
     contact: 'bertrand.rioux@gmail.com'
 }
-let abi = JSON.parse(fs.readFileSync(jsonFile)).abi;
-global.contract = {
-   abi: abi,
+let carboTagAbi = JSON.parse(fs.readFileSync("../build/contracts/CarboTag.json")).abi;
+global.contracts = {
+   carboTagAbi: carboTagAbi,
+   carboTagAddr: process.env.CARBO_TAG_ADDR,
    escrowAbi: JSON.parse(fs.readFileSync("../build/contracts/MultiSigWallet.json")).abi,
    stamperAbi: JSON.parse(fs.readFileSync("../build/contracts/Stamper.json")).abi,
-   address: process.env.CARBO_TAG_ADDR,
+   stamperFactoryAbi: JSON.parse(fs.readFileSync("../build/contracts/StamperFactory.json")).abi,
+   stamperFactoryAddr: process.env.STAMPER_FACTORY_ADDR,
+   COGAbi: JSON.parse(fs.readFileSync("../build/contracts/COG.json")).abi,
+   COGaddr: carboTag.callFn('getCOGaddr'),
    rpcURL: process.env.INFURA_ROPSTEN
 
 }
@@ -41,9 +44,9 @@ global.contract = {
 global.current_user = {address: null}; // address extracted from active metamask plugin
 
 // store carboTag contract as global json object
-global.carboTag = new Contract(abi,process.env.CARBO_TAG_ADDR);
+global.carboTag = new Contract(carboTagAbi,process.env.CARBO_TAG_ADDR);
 var MSWFactAbi = JSON.parse(fs.readFileSync("../build/contracts/MultiSigWalletFactory.json")).abi;
-let MSWFactAddr = carboTag.callFn('factory_addr');
+let MSWFactAddr = carboTag.callFn('factoryAddr');
 global.mSWFactory = new Contract(MSWFactAbi,MSWFactAddr);
 
 var indexRouter = require('./routes/index');

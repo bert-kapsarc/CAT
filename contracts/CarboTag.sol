@@ -1,6 +1,6 @@
 pragma solidity ^0.5.12;
 import "./MultiSigWalletFactory.sol";
-import "./Stamper.sol";
+import "./COG.sol";
 
 library CarboTagLib {
 
@@ -16,12 +16,12 @@ contract oldCarboTag {
     //basic wallet, minimum attributes
     //bool registered;
     string name;   //Text Identifier
-    int carbon;      //Carbon held
-    uint gold;      //Gold held
+    int carbon;    //Carbon held
+    uint gold;     //Gold held
   }
   uint public totalCarbon;   //metric for system carbon this can be negative
   uint public totalGold;   //metric for system gold
-  address public factory_addr;
+  address public factoryAddr;
   mapping (address => Attributes) public wallet;
   mapping (address => bool) public registered; //Valid account?)
   mapping (uint => address) public userIndex;  //So we can cycle through accounts easily
@@ -34,18 +34,12 @@ contract oldCarboTag {
 /// @dev <docment-me>
 
 contract CarboTag {
-    /*
-     *  Events
-    */
   event EscrowFunded (address indexed sender, uint256 indexed value);
-
   address public owner;
-  mapping (address => bool) public governor;
-  address public factory_addr;
+  address public COG;
+  address public factoryAddr;
   uint public totalCarbon;   //metric for system carbon this can be negative
   uint public totalGold;   //metric for system gold
-  uint public totalStamperCarbon; //metric for stamper carbon this can be non-negative
-  uint public totalStamperGold; //metric for stamper gold
   
   struct Attributes {  //basic wallet, minimum attributes
     string name;   //Text Identifier
@@ -56,7 +50,16 @@ contract CarboTag {
   mapping (address => bool) public registered; //Valid account?)
   //mapping a given wallet address pair to escrow address
   mapping(address => mapping(address => address payable)) internal EscrowAddr;
+
   mapping (address => address[]) public escrowList; // mapping user address to array of active escrows
+
+  function getCOGaddr()
+      public
+      view
+      returns (address[] memory) 
+  {
+      return COGaddr;
+  }
   function getEscrowList(address _address)
       public
       view
@@ -64,11 +67,11 @@ contract CarboTag {
   {
       return escrowList[_address];
   }
-  //escrow addresses associated with each wallet
-    // Note this is additional data stored on the network
-    // To help users keep track of the escrow accounts associated with their wallet
-    // and check for exisitng transactions in each escrow
-    // to minimze data storage we could store this data externally...
+  // escrow addresses associated with each wallet
+  // Note this is additional data stored on the network
+  // To help users keep track of the escrow accounts associated with their wallet
+  // and check for exisitng transactions in each escrow
+  // to minimze data storage we could store this data externally...
 
   // TO-DO only store escrow tx data into the correspoinding multisig wallet 
   // within the encodeWithSignature data. Requires developing decoding routine 
@@ -101,11 +104,7 @@ contract CarboTag {
   uint public stamperCount; //number of stampers
 
   modifier onlyOwner () {  //added some security
-    require(msg.sender == owner, 'ONly the contract owner can do that');
-    _;
-  }
-  modifier onlyGovernor () {    //added some governance
-    require(governor[msg.sender] == true);
+    require(msg.sender == owner, 'Only the contract owner can do that');
     _;
   }
   modifier onlyMember () {  //added some security
@@ -114,10 +113,6 @@ contract CarboTag {
   }
   modifier onlyEscrow(address _sender, address _receiver) {  //added some security
     require(findEscrowAddr(_sender, _receiver) == msg.sender, "Can only call from Escrow contract");
-    _;
-  }
-  modifier onlyStamperContract(address _stamper) {  //added some security
-    require(stamperRegistry[_stamper] == msg.sender, "Can only call from Stamper Contract");
     _;
   }
   modifier escrowExists(address _sender, address _receiver){
@@ -149,20 +144,20 @@ contract CarboTag {
     _;
   }
 
-
+  /// @dev Contract constructor sets initial owner and required number of confirmations.
+  /// @param _owners List of initial owners.
+  /// @param _required Number of required confirmations.
   constructor(address factory, address payable oldAddr) public {
     owner = msg.sender;
-    governor[msg.sender]=true;
-    factory_addr = factory;
+    factoryAddr = factory;
     oldCarboTag oldContract = oldCarboTag(oldAddr);
     userCount = oldContract.userCount();
     //userCount = accounts.length;
     totalCarbon = oldContract.totalCarbon();  //old name for carbon...
-    totalGold = oldContract.totalGold();
-    // reset stamper accounts in the new contract
-    // stamperCount = oldContract.stamperCount;
-    // totalStamperCarbon; //metric for stamper carbon this can be non-negative
-    // totalStamperGold; //metric for stamper gold
+    
+    COG cog = new COG(owner); // Create new COG address used to govern this CAT network
+    COGaddr = address(cog); // save COG address
+
     address _address;
     //for (uint i=0; i<accounts.length; i++) {
     //  _address = accounts[i];
@@ -177,7 +172,7 @@ contract CarboTag {
       registered[_address] = oldContract.registered(_address);
       /*
       TODO Carry over escrow from old contract addrr?
-      this is tricky because the MultiSigWallet escrrow include the old contract address 
+      this is tricky because the MultiSigWallet escrow uses the old contract address 
       as an owner to allow CarboTag to trigger the escrow
       This will be easier when the escrow is not linked to this contract
       such that createTransaction() fn is no longer used to create escrow txs
@@ -202,13 +197,6 @@ contract CarboTag {
     external payable 
   {
 
-  }
-    
-  function addGovernor(address _target)  
-    public 
-    onlyOwner()
-  {
-    governor[_target]=true;
   }
 
   function signUp(string memory name) public{
@@ -241,15 +229,14 @@ contract CarboTag {
     escrowDoesNotExist(msg.sender,_receiver)
     returns(address payable _escrowAddr){
     // Escrow has 3 participants and all must sign
-    // include this contract as onwer of ESCROW
-    // confirms that this cpnytract is party in the escrow (can submit TXs)
+    // include this contract as onwer of ESCROW (can submit TXs)
     uint _required = 3;
     address[] memory _owners = new address[](3);
     _owners[0]= msg.sender;
     _owners[1]=_receiver;
     _owners[2]= address(this);
 
-    _escrowAddr = address(MultiSigWalletFactory(factory_addr).create(_owners, _required));
+    _escrowAddr = address(MultiSigWalletFactory(factoryAddr).create(_owners, _required));
     EscrowAddr[msg.sender][_receiver] = _escrowAddr;
     escrowList[msg.sender].push(_escrowAddr);
     escrowList[_receiver].push(_escrowAddr);
@@ -352,7 +339,8 @@ contract CarboTag {
     //send funds to _sender ??
     //_sender.call.value(msg.value)("");
 
-    updateStamperTotals(_sender,_receiver,_gold,_carbon);
+    // TO-DO: is it important to track stamper total carbon and gold?
+    // MultiSigWallet(_stamperAddr).updateStamperTotals(_sender,_receiver,_gold,_carbon);
 
     // Delete the escrow?
     delete escrowTx[_escrowAddr][_txID];
@@ -383,71 +371,6 @@ contract CarboTag {
     delete escrowTx[_escrowAddr][_txID];
   }
   
-
-  function addStamper(address target, uint stamprate, uint minpmt) 
-    public 
-    // only contract governors can nominate stampers
-    onlyGovernor()
-    stamperDoesNotExsit(target)
-
-  {
-    Stamper stamper = new Stamper(target,msg.sender,stamprate,minpmt);
-
-    stamperRegistry[target] = address(stamper);
-    stamperIndex[stamperCount++]=target;
-    //sumTokens();
-    uint _carbon; //carbon to add to totalStamperCarbon
-    if(wallet[target].carbon>0){
-      _carbon = uint(wallet[target].carbon); // only pass positive carbon 
-    }
-    totalStamperCarbon += uint(_carbon);
-    totalStamperGold += wallet[target].gold;
-  }
-
-  function updateGold(uint stamps, address stamper)
-    public 
-    onlyStamperContract(stamper)
-  {
-    // Some points to address
-    // Block timestamp can be manipulated by miners within 900s
-    // Make sure that this deos not distort the stamping rate within am acceptable tollerance
-    // Need to set other stamp constriants (total stamps based on auditing, or other metrics)
-    uint carbon;// new carbon generated by stamper if stamps exceed carbons)
-    wallet[stamper].gold += stamps;
-    if(wallet[stamper].carbon>int(stamps)){
-      wallet[stamper].carbon -= int(stamps);
-    }else{
-      // Keeps stamper carbon from going negative
-      // Stamper wallet can not have negative debt after stamping ...(?)
-      wallet[stamper].carbon = 0;
-      totalCarbon += stamps;
-      // stamper creates new _carbon if it stamps more than it has carbon
-      carbon = stamps - uint(wallet[stamper].carbon);
-    } 
-
-    totalGold += stamps;
-    totalCarbon += carbon - stamps;
-    totalStamperGold += stamps;
-    totalStamperCarbon += carbon - stamps;
-  }
-
-  function updateStamperTotals(address _sender, address _receiver, int _carbon, int _gold) internal{
-    //why do we need to update/store these???
-    int8 _sign; // defines direction of carbon/gold movements
-    bool _stamper=false;
-    if(stamperRegistry[_sender]!= address(0x0)){
-      _stamper = true;
-      _sign = 1; // if stamper is sender values are sent out ( substract )
-    }if(stamperRegistry[_receiver]!= address(0x0)){
-      _stamper = !_stamper; //if both sender and receiver are stampers do nothing (no change in total gold/carbon balance)
-      _sign = -1; // if stamper is receiver values are coming in (add)
-    }
-    // note when carbon/gold are negative these are asks by the sender and direction if flipped
-    if(_stamper){
-      totalStamperCarbon -= uint(_sign*_carbon);
-      totalStamperGold -= uint(_sign*_gold);
-    }
-  }
 
   // Fn to get the external multisig transaciton ID for an escrow transaction 
   // created in this contract 
@@ -484,28 +407,6 @@ contract CarboTag {
       for (i=from; i<to; i++)
           _transactionIds[i - from] = transactionIdsTemp[i];
   }
-  
-/*
-  function sumTokens() external view returns(uint, uint, uint, uint) {  //Generates general metrics for the system and stamper coin levels, might be pretty inefficient
-    // Commented this out as it would cost too much gas (now just a view function)
-    // instead wee update totalCarbon totalGold, etc... every time a relevant transaciton is sumitted/confirmed
-    uint totalCarbonx = 0;
-    uint totalGoldx = 0;
-    uint totalStamperCarbonx = 0;
-    uint totalStamperGoldx = 0;
-    for(uint i=0;i<=userCount;i++)
-      {
-      totalCarbonx += uint(wallet[userIndex[i]].carbon);
-      totalGoldx += wallet[userIndex[i]].gold;
-      }
-    for(uint i=0;i<=stamperCount;i++)
-      {
-      totalStamperCarbonx += uint(wallet[stamperIndex[i]].carbon);
-      totalStamperGoldx += wallet[stamperIndex[i]].gold;
-      }
-    return (totalCarbonx,totalGoldx,totalStamperCarbonx,totalStamperGoldx);
-  }
-*/
   function changeOwner(address _newOwner)
     onlyOwner()
     public

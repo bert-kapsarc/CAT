@@ -1,13 +1,14 @@
 pragma solidity ^0.5.12;
+import "./StamperFactory.sol";
 import "./CarboTag.sol";
-
 contract Stamper {
 
   attributes public stamper;
+  address public CATaddr; // the carbona ccouting contract address used by this stamper contract
 
   struct attributes {
     address owner;
-    address payable parent; // parent address that created this contract (this should be the carboTag contract)
+    address payable parent; // parent address that created this contract (this should be the stamperFactory contract)
     address nominator;
     bool active;   //Is stamper active?
     uint rate; //Rate of stamping speed
@@ -59,7 +60,7 @@ contract Stamper {
     _;
   }
   modifier onlyRegisteredWallets(){
-    (bool _registered) = CarboTag(stamper.parent).registered(msg.sender);
+    (bool _registered) = CarboTag(CATaddr).registered(msg.sender);
     require(_registered == true, 'You are not a registered user of the parent accounting contract');
     _;
   }
@@ -68,7 +69,7 @@ contract Stamper {
     _;
   }
   modifier onlyGovernor(){
-    require(CarboTag(stamper.parent).governor(msg.sender), 'Only Governors can do that');
+    require(StamperFactory(stamper.parent).governor(msg.sender), 'Only Governors can do that');
     _;
   }
   modifier notApproved(uint _proposal){
@@ -188,7 +189,7 @@ contract Stamper {
 
       uint stamps = (block.timestamp-stamper.last)/stamper.rate;
       stamper.stamps += stamps; 
-      CarboTag(stamper.parent).updateGold(stamps,stamper.owner);
+      StamperFactory(stamper.parent).updateGold(stamps,stamper.owner);
 
   }
 

@@ -2,7 +2,7 @@
 const Contract = require('./contract');
 
 async function getTxData(escrowAddr){
-  let multiSigWallet = new Contract(contract.escrowAbi,escrowAddr)
+  let multiSigWallet = new Contract(contracts.escrowAbi,escrowAddr)
   const txCount = await carboTag.callFn('escrowTxCount',escrowAddr)
   var transactions = []
   for (i = 0; i < txCount; i++) {

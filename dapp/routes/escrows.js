@@ -14,7 +14,7 @@ router.param('user_wallet', async function(req, res, next, _address){
     var txIDs;
     let escrowList= await carboTag.callFn('getEscrowList',_address)
     for (i = 0; i < escrowList.length; i++) {
-        let escrow = new Contract(contract.escrowAbi,escrowList[i])
+        let escrow = new Contract(contracts.escrowAbi,escrowList[i])
         let txCount = await escrow.callFn('transactionCount')
         if(txCount>0){
             txIDs = await escrow.callFn('getTransactionIds',[0, txCount, true, false])
@@ -23,7 +23,7 @@ router.param('user_wallet', async function(req, res, next, _address){
         let failed = await escrow.callFn('getTransactionCount',[false, false])
         let owners = await escrow.callFn('getOwners')
         owners = owners.map(function(x){ return x.toLowerCase() })
-        await owners.splice(owners.indexOf(contract.address), 1 )
+        await owners.splice(owners.indexOf(contracts.carboTagAddr), 1 )
         await owners.splice(owners.indexOf(_address), 1 )
         let counterparties = []
         for (j = 0; j < owners.length; j++) {

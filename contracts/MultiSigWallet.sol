@@ -44,7 +44,7 @@ contract MultiSigWallet {
      *  Modifiers
      */
     modifier onlyWallet() {
-        require(msg.sender == address(this), 'Chnages can only be made by wallet address');
+        require(msg.sender == address(this), 'Changes can only be made by wallet address');
         _;
     }
 
