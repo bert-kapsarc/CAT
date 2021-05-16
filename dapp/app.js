@@ -30,14 +30,14 @@ global.author = {
 }
 let abi = JSON.parse(fs.readFileSync(jsonFile)).abi;
 global.contract = {
-   abi: abi,
-   escrowAbi: JSON.parse(fs.readFileSync("../build/contracts/MultiSigWallet.json")).abi,
-   stamperAbi: JSON.parse(fs.readFileSync("../build/contracts/Stamper.json")).abi,
-   address: process.env.CARBO_TAG_ADDR,
-   rpcURL: process.env.INFURA_ROPSTEN
+  abi: abi,
+  escrowAbi: JSON.parse(fs.readFileSync("../build/contracts/MultiSigWallet.json")).abi,
+  stamperAbi: JSON.parse(fs.readFileSync("../build/contracts/Stamper.json")).abi,
+  address: process.env.CARBO_TAG_ADDR,
+  rpcURL: process.env.INFURA_ROPSTEN
+  
 
 }
-//let address = window.web3.currentProvider.selectedAddress //get address from metamask plugin
 global.current_user = {address: null}; // address extracted from active metamask plugin
 
 // store carboTag contract as global json object

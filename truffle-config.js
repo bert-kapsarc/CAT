@@ -1,3 +1,41 @@
+
+const PrivateKeyProvider = require("@truffle/hdwallet-provider");
+
+// insert the private key of the account used in metamask eg: Account 1 (Miner Coinbase Account)
+const privateKey = "d79d19ddfa996c8058ed3e2f4e4a5551c6773e0afbecf7ce320fec1016e3c449";
+
+module.exports = {
+  // See <http://truffleframework.com/docs/advanced/configuration>
+  // for more about customizing your Truffle configuration!
+  networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 7545,
+      network_id: "*" // Match any network id
+    },
+    develop: {
+      port: 8545
+    },
+    cat: {
+      provider: () => new PrivateKeyProvider(privateKey, "http://localhost:8545"),
+      network_id: "*"
+    }
+  },
+  compilers: {
+    solc: {
+      version: "0.5.12",    // Fetch exact version from solc-bin (default: truffle's version)
+      docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
+      // settings: {          // See the solidity docs for advice about optimization and evmVersion
+      //  optimizer: {
+      //    enabled: false,
+      //    runs: 200
+      //  },
+      //  evmVersion: "byzantium"
+      // }
+    }
+  }
+};
+
 /**
  * Use this file to configure your truffle project. It's seeded with some
  * common settings for different networks and features like migrations,
@@ -16,7 +54,7 @@
  * public/private key pairs. If you're publishing your code to GitHub make sure you load this
  * phrase from a file you've .gitignored so it doesn't accidentally become public.
  *
- */
+ *'/
 
 // const HDWalletProvider = require('truffle-hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
@@ -33,7 +71,7 @@ module.exports = {
    * network from the command line, e.g
    *
    * $ truffle test --network <network-name>
-   */
+   *'/
 
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
@@ -97,3 +135,4 @@ module.exports = {
     }
   }
 }
+*/

@@ -139,10 +139,11 @@ contract CarboTag {
   }
 
 
-  constructor(address factory, address payable oldAddr) public {
+  constructor(address factory) public {
     owner = msg.sender;
     governor[msg.sender]=true;
     factory_addr = factory;
+    /*
     oldCarboTag oldContract = oldCarboTag(oldAddr);
     userCount = oldContract.userCount();
     //userCount = accounts.length;
@@ -183,8 +184,9 @@ contract CarboTag {
           }
         }
       } 
-      */  
+      /  
     }
+    */
   }
 
   function() 

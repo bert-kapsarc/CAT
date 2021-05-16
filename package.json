@@ -35,9 +35,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.4.0",
+    "ethers": "^5.1.4",
     "ganache-cli": "6.7.0",
+    "multer": "^1.4.2",
     "solc": "0.5.12",
-    "truffle": "5.1.8"
+    "truffle": "^5.1.8"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"

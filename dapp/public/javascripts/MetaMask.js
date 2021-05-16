@@ -1,23 +1,25 @@
 function MetaMask(contract){
+  window.web3 = new Web3(window.ethereum);
   const web3 = new Web3(new Web3.providers.HttpProvider(contract.rpcURL))
   const carboTag = new web3.eth.Contract(contract.abi, contract.address)
   var address, browse, stamperForms={}
   window.addEventListener('load', async function() {
     if (window.ethereum) {
-      window.web3 = new Web3(ethereum)  
-      await ethereum.enable();
+      ethereum.on('chainChanged', (_chainId) => window.location.reload());
+      await ethereum.request({ method: 'eth_requestAccounts' });
     }
     // Legacy dapp browsers...
     else if (window.web3) {
-      window.web3 = new Web3(web3.currentProvider);
+      console.log('legacy');
+      window.ethereum = new Web3(web3.currentProvider);
     }
-    if(window.web3){
-      browser = window.web3
+    if(window.ethereum){
+      browser = window.ethereum
       getUserProfile()
       window.ethereum.on('accountsChanged', function (accounts) {
         getUserProfile()
       })
-      if(window.web3.currentProvider.networkVersion==3){
+      if(window.ethereum.networkVersion== 3 || 1337){
         $('#browser').html('&#10004;')
         browser = "Connected to Ropsten"
       }else{
@@ -42,7 +44,7 @@ function MetaMask(contract){
         console.log('Error:', err)
       })
     }else{
-      address = window.web3.currentProvider.selectedAddress
+      address = window.ethereum.selectedAddress
     }
     $.ajax({
       type: 'get',
@@ -62,21 +64,23 @@ function MetaMask(contract){
         }
       },
       complete: function(data){
-        document.querySelector('form[name=addCarbon]').onsubmit = addCarbon
+        var form = document.querySelector('form[name=addCarbon]')
+        if(form != null){form.onsubmit = addCarbon}
         // forms to add user as stamper
         let addStamperForms = document.getElementsByName('addStamper');
         for (var i = 0; i < addStamperForms.length; i++) {
-          addStamperForms[i].onsubmit = addStamper
+          form = addStamperForms[i]
+          if(form != null){form.onsubmit = addStamper}
         }
         // forms to vote for users as stamper
         let stamperForms = document.getElementsByName('stamperVote');
         for (var i = 0; i < stamperForms.length; i++) {
-          stamperForms[i].onsubmit = stamperVote
+          form = stamperForms[i]
+          if(form != null){form.onsubmit = stamperVote}
         }
-
-        let stampForm = document.querySelector('form[name=stamp]')
-        if(stampForm != null){
-          stampForm.onsubmit = stamp
+        form = document.querySelector('form[name=stamp]')
+        if(form != null){
+          form.onsubmit = stamp
         }
       },
       error: function(data) {
@@ -86,7 +90,7 @@ function MetaMask(contract){
     })
   }
   function signUp(event){
-    const name = event.path[0].querySelector('input[name=name]').value
+    const name = getPath(event).querySelector('input[name=name]').value
     event.txData = carboTag.methods['signUp'](name).encodeABI();
     return sendTx(event)
   }
@@ -148,8 +152,19 @@ function MetaMask(contract){
     }
   }
 
+
+  function getPath(event){
+    var path = event.path || (event.composedPath && event.composedPath());
+    if (path) {
+      return path[0];
+    } else {
+      return false;
+    }
+
+  }
+
   function stamperVote(event){
-    let stamperAddr = event.path[0].querySelector('input[name=stamperAddr]').value 
+    let stamperAddr = getPath(event).querySelector('input[name=stamperAddr]').value 
     let stamperContract = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
     //event.txData = carboTag.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
     let radios = document.getElementsByName('voteFor'+stamperAddr)
@@ -161,20 +176,20 @@ function MetaMask(contract){
 
   function createEscrow(event){
     //event.txData = carboTag.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
-    event.txData = carboTag.methods['createEscrow'](event.path[0].querySelector('input[name=counterparty]').value).encodeABI();
+    event.txData = carboTag.methods['createEscrow'](getPath(event).querySelector('input[name=counterparty]').value).encodeABI();
     return sendTx(event)
   }
 
   function createTx(event){
-    const counterparty = event.path[0].querySelector('input[name=counterparty]').value
+    const counterparty = getPath(event).querySelector('input[name=counterparty]').value
 
     // Get value of carbon gold to transact and sign of transaction (send (+)/ recevie (-))
-    let carbon = event.path[0].querySelector('input[name=carbon]').value
-    let radios = document.getElementsByName('txCarbon'+event.path[0].escrowAddr.value);
+    let carbon = getPath(event).querySelector('input[name=carbon]').value
+    let radios = document.getElementsByName('txCarbon'+getPath(event).escrowAddr.value);
     carbon *= getRadioValue(radios)
 
-    let gold = event.path[0].querySelector('input[name=gold]').value
-    radios = document.getElementsByName('txGold'+event.path[0].escrowAddr.value);
+    let gold = getPath(event).querySelector('input[name=gold]').value
+    radios = document.getElementsByName('txGold'+getPath(event).escrowAddr.value);
     gold *= getRadioValue(radios)
 
     event.txData = carboTag.methods['createTransaction'](counterparty,carbon,gold).encodeABI();
@@ -182,19 +197,19 @@ function MetaMask(contract){
     return sendTx(event)
   }
   function addCarbon(event){
-    const carbon = event.path[0].querySelector('input[name=carbon]').value
+    const carbon = getPath(event).querySelector('input[name=carbon]').value
     event.txData = carboTag.methods['addCarbon'](carbon).encodeABI();
     return sendTx(event)
   }
   function addStamper(event){
-    const stamper = event.path[0].querySelector('input[name=stamper]').value
-    const stampRate = event.path[0].querySelector('input[name=stampRate]').value
-    const minPayment = 0//event.path[0].querySelector('input[name=minPayment]').value
+    const stamper = getPath(event).querySelector('input[name=stamper]').value
+    const stampRate = getPath(event).querySelector('input[name=stampRate]').value
+    const minPayment = 0//getPath(event).querySelector('input[name=minPayment]').value
     event.txData = carboTag.methods['addStamper'](stamper,stampRate,minPayment).encodeABI();
     return sendTx(event)
   }
   function stamp(event){
-    let stamperAddr = event.path[0].querySelector('input[name=stamperAddr]').value
+    let stamperAddr = getPath(event).querySelector('input[name=stamperAddr]').value
     let stamperContract = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
     event.txData = stamperContract.methods['stamp']().encodeABI();
     event.destination = stamperAddr
@@ -202,7 +217,9 @@ function MetaMask(contract){
   }
 
   let confirmed = {}
-  function sendTx(event) {
+  async function sendTx(event) {
+    event.preventDefault();
+    let path = getPath(event);
     //console.log(confirmed)
     if(event.destination==null){
       // default destination carboTag contract for majority of calls
@@ -210,29 +227,31 @@ function MetaMask(contract){
     }
     if(confirmed[event.target.name]){
       confirmed[event.target.name] = false
-      return true
+      return true;
     }else{
       try {
-        //console.log(event)
-        window.web3.eth.sendTransaction({from: address, to: event.destination, data: event.txData})
-        .on('confirmation', function(confirmationNumber, receipt){ 
-          // set confirmed status of current form. 
-          // NOte security issue if form names are not unique.
-          // Can cause overwritting of confimration status preventing form from being submitted, or causing multiple sendTransaction requests!
-          confirmed[event.target.name] = true
-          event.path[0].submit()
-        }).on('error', function(){
-          console.error
-          //return false
-        })
-          
-        // For this example, don't actually submit the form
-        // event.preventDefault();
-      }catch (error) {
-        console.log(error)
+        const transactionHash = await ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              to: event.destination,
+              from: address,
+              data: event.txData,
+              // And so on...
+            },
+          ],
+        });
+        console.log(transactionHash);
+        
+        // Handle the result
+      } catch (error) {
+        console.error(error);
         console.log('User denied account access...')
+      } finally{
       }
-      return false
+        
+        
     }
   }
+
 }
