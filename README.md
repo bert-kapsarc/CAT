@@ -2,7 +2,7 @@
 
 A smart contract library and dApp for tracking emission inventories across hydrocarbon fuel supply chains. 
 
-*This project is curretnly undegoing restructuring. Including building separate project stream :*
+**This project is curretnly undegoing restructuring:**
 
 1. CAT network for private transfers and tracking of emission inventories by large companies *(private network, e.g., Besu or Fabric)*
 2. CAT dapp SDK for interactng with the CAT network *(currently using node.js)*.
