@@ -1,11 +1,13 @@
 function MetaMask(contract){
   window.web3 = new Web3(window.ethereum);
   const web3 = new Web3(new Web3.providers.HttpProvider(contract.rpcURL))
-  const carboTag = new web3.eth.Contract(contract.abi, contract.address)
+  const cat = new web3.eth.Contract(contract.CATabi, contract.CATaddr)
   var address, browse, stamperForms={}
+
+  window.ethereum.on('chainChanged', (_chainId) => window.location.reload());
+
   window.addEventListener('load', async function() {
     if (window.ethereum) {
-      ethereum.on('chainChanged', (_chainId) => window.location.reload());
       await ethereum.request({ method: 'eth_requestAccounts' });
     }
     // Legacy dapp browsers...
@@ -19,15 +21,20 @@ function MetaMask(contract){
       window.ethereum.on('accountsChanged', function (accounts) {
         getUserProfile()
       })
-      if(window.ethereum.networkVersion== 3 || 1337){
+      if(window.ethereum.networkVersion==3){
         $('#browser').html('&#10004;')
         browser = "Connected to Ropsten"
-      }else{
-        browser = "Warning: you are not connected to Ropsten. Change metamask network"
+      }else if(window.ethereum.chainId== 1337){
+        $('#browser').html('&#10004;')
+        browser = "Connected to Local network"
       }
+      else{
+        browser = "Warning: CAT network not detected. Swith Metamask network or deploy CAT contracts on desired network."
+      }
+      
     }else{
     // Non-dapp browsers...
-      browser = 'Your browser is not connected to Ethereum. Try <a href="https://metamask.io/"> MetaMask </a> to setup an account with SACAT.'
+      browser = 'Your browser is not connected to Ethereum. Try <a href="https://metamask.io/"> MetaMask </a> to setup an account.'
       //$('#metaMask').html('<h3>'+browser+'</h3>')
     } 
     $('#browser').append(browser)
@@ -91,7 +98,7 @@ function MetaMask(contract){
   }
   function signUp(event){
     const name = getPath(event).querySelector('input[name=name]').value
-    event.txData = carboTag.methods['signUp'](name).encodeABI();
+    event.txData = cat.methods['signUp'](name).encodeABI();
     return sendTx(event)
   }
 
@@ -126,7 +133,7 @@ function MetaMask(contract){
             $.each(document.getElementsByClassName('rejectEscrowTx'), function(index, element) {
               let txId = element.txId.value
               if(escrowAddr!==null){element.onsubmit = function(event){
-                event.txData = carboTag.methods['rejectTransaction'](counterpartyAddr,txId).encodeABI();
+                event.txData = cat.methods['rejectTransaction'](counterpartyAddr,txId).encodeABI();
                 return sendTx(event)
               }}
             });
@@ -166,7 +173,7 @@ function MetaMask(contract){
   function stamperVote(event){
     let stamperAddr = getPath(event).querySelector('input[name=stamperAddr]').value 
     let stamperContract = new web3.eth.Contract(contract.stamperAbi,stamperAddr)
-    //event.txData = carboTag.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
+    //event.txData = cat.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
     let radios = document.getElementsByName('voteFor'+stamperAddr)
     let vote = getRadioValue(radios)
     event.txData = stamperContract.methods['vote'](vote=="true").encodeABI()
@@ -175,8 +182,8 @@ function MetaMask(contract){
   }
 
   function createEscrow(event){
-    //event.txData = carboTag.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
-    event.txData = carboTag.methods['createEscrow'](getPath(event).querySelector('input[name=counterparty]').value).encodeABI();
+    //event.txData = cat.methods['createEscrow']($('#counterparty').attr("address")).encodeABI();
+    event.txData = cat.methods['createEscrow'](getPath(event).querySelector('input[name=counterparty]').value).encodeABI();
     return sendTx(event)
   }
 
@@ -192,20 +199,20 @@ function MetaMask(contract){
     radios = document.getElementsByName('txGold'+getPath(event).escrowAddr.value);
     gold *= getRadioValue(radios)
 
-    event.txData = carboTag.methods['createTransaction'](counterparty,carbon,gold).encodeABI();
+    event.txData = cat.methods['createTransaction'](counterparty,carbon,gold).encodeABI();
     
     return sendTx(event)
   }
   function addCarbon(event){
     const carbon = getPath(event).querySelector('input[name=carbon]').value
-    event.txData = carboTag.methods['addCarbon'](carbon).encodeABI();
+    event.txData = cat.methods['addCarbon'](carbon).encodeABI();
     return sendTx(event)
   }
   function addStamper(event){
     const stamper = getPath(event).querySelector('input[name=stamper]').value
     const stampRate = getPath(event).querySelector('input[name=stampRate]').value
     const minPayment = 0//getPath(event).querySelector('input[name=minPayment]').value
-    event.txData = carboTag.methods['addStamper'](stamper,stampRate,minPayment).encodeABI();
+    event.txData = cat.methods['addStamper'](stamper,stampRate,minPayment).encodeABI();
     return sendTx(event)
   }
   function stamp(event){
@@ -220,10 +227,9 @@ function MetaMask(contract){
   async function sendTx(event) {
     event.preventDefault();
     let path = getPath(event);
-    //console.log(confirmed)
     if(event.destination==null){
-      // default destination carboTag contract for majority of calls
-      event.destination = contract.address
+      // default destination CAT contract for majority of calls
+      event.destination = contract.CATaddr
     }
     if(confirmed[event.target.name]){
       confirmed[event.target.name] = false
@@ -241,7 +247,9 @@ function MetaMask(contract){
             },
           ],
         });
-        console.log(transactionHash);
+        // Confirm transactions with blockh threshold set to 1
+        path.insertAdjacentHTML('beforeend', '<div class="loader"></div><span>Checking confirmations</span>');
+        confirmEtherTransaction(transactionHash,1);
         
         // Handle the result
       } catch (error) {
@@ -254,4 +262,40 @@ function MetaMask(contract){
     }
   }
 
+  async function getConfirmations(txHash) {
+    try {('https://rinkeby.infura.io/')
+  
+      // Get transaction details
+      const trx = await web3.eth.getTransaction(txHash)
+  
+      // Get current block number
+      const currentBlock = await web3.eth.getBlockNumber()
+  
+      // When transaction is unconfirmed, its block number is null.
+      // In this case we return 0 as number of confirmations
+      return trx.blockNumber === null ? 0 : currentBlock - trx.blockNumber +1
+    }
+    catch (error) {
+      console.log(error)
+    }
+  }
+  function confirmEtherTransaction(txHash, confirmations = 10) {
+    console.log("checking confirmations")
+    setTimeout(async () => {
+      
+      // Get current number of confirmations and compare it with sought-for value
+      const trxConfirmations = await getConfirmations(txHash)
+      
+      console.log('Transaction with hash ' + txHash + ' has ' + trxConfirmations + ' confirmation(s)')
+
+      if (trxConfirmations >= confirmations) {
+        // Handle confirmation event according to your business logic
+        console.log('Transaction with hash ' + txHash + ' has been successfully confirmed')
+        window.location.reload()
+        return
+      }
+      // Recursive call
+      return confirmEtherTransaction(txHash, confirmations)
+    }, 10 * 1000)
+  }
 }

@@ -7,16 +7,17 @@
 //}
 //const web3 = new Web3(ganache.provider(balance));
 
-const Migrations = artifacts.require("./Migrations.sol");
-const MultisigWallet = artifacts.require('MultiSigWallet.sol');
-const Factory = artifacts.require('Factory.sol');
-const MultisigWalletFactory = artifacts.require('MultisigWalletFactory.sol')
-const CarboTag = artifacts.require("./CarboTag.sol");
+//const Migrations = artifacts.require("./Migrations.sol");
+const MultisigWallet = artifacts.require('contracts/MultiSigWallet.sol');
+const Factory = artifacts.require('./Factory.sol');
+const MultisigWalletFactory = artifacts.require('./MultisigWalletFactory.sol')
+const CAT = artifacts.require("./CAT.sol");
+const Stamper = artifacts.require("contracts/stamper.sol");
 module.exports = function(deployer) {
-    deployer.deploy(Migrations);
+    //deployer.deploy(Migrations);
     deployer.deploy(Factory);
     deployer.deploy(MultisigWalletFactory).then(function() {
-        return deployer.deploy(CarboTag, MultisigWalletFactory.address);
+        return deployer.deploy(CAT, MultisigWalletFactory.address);
     });
   //const args = process.argv.slice()
   //deployer.deploy(MultisigWalletFactory)

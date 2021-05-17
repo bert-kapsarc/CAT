@@ -15,11 +15,11 @@ router.param('address', async function(req, res, next, _address){
   // Do something with id
   // Store id or other info in req object
   // Call next when done
-  data.user = await carboTag.callFn('wallet',_address)
+  data.user = await cat.callFn('wallet',_address)
   data.user.address = _address.toLowerCase()
-  data.user.registered = await carboTag.callFn('registered',_address)
-  data.user.owner = (await carboTag.callFn('owner')) == _address
-  data.user.governor = await carboTag.callFn('governor',_address)
+  data.user.registered = await cat.callFn('registered',_address)
+  data.user.owner = (await cat.callFn('owner')) == _address
+  data.user.governor = await cat.callFn('governor',_address)
   // == _address
 
   data.stamper = await getStamperData(_address)
@@ -27,15 +27,15 @@ router.param('address', async function(req, res, next, _address){
 
   if(current_user.address!=null){ 
     if(current_user.address != data.user.address){
-      let escrowAddr = await carboTag.callFn('findEscrowAddr',[data.user.address,current_user.address])  
+      let escrowAddr = await cat.callFn('findEscrowAddr',[data.user.address,current_user.address])  
       data.escrow = {address: escrowAddr}
       multiSigWallet = new Contract(contract.escrowAbi,escrowAddr)
-      const txCount = await carboTag.callFn('escrowTxCount',escrowAddr)
+      const txCount = await cat.callFn('escrowTxCount',escrowAddr)
       data.escrow.transactions = []
       data.escrow.txCount = 0
       var tx
       for (i = 0; i < txCount; i++) {
-        tx = await carboTag.callFn('escrowTx',[escrowAddr,i])
+        tx = await cat.callFn('escrowTx',[escrowAddr,i])
         if(tx.exists==true){
           data.escrow.txCount += 1
           // make sure all user addresses are consistent case 
@@ -60,7 +60,7 @@ router.param('address', async function(req, res, next, _address){
 }); 
 
 async function getStamperData(_address){
-  let _stamperAddr = await carboTag.callFn('stamperRegistry',_address)
+  let _stamperAddr = await cat.callFn('stamperRegistry',_address)
   
   if(_stamperAddr!=0x0000000000000000000000000000000000000000){
     //console.log(current_user)
@@ -75,6 +75,7 @@ async function getStamperData(_address){
     //console.log(_stamper.publicVotes)
     if(current_user!=null && current_user.address!=null){
       let _voteIndex = await stamperContract.callFn('governorVoteIndex', current_user.address)
+      _stamper.governorVoteIndex = _voteIndex
       _stamper.governorVote  = await stamperContract.callFn('governorVote', _voteIndex)
       //console.log(_stamper)
     }
@@ -83,7 +84,7 @@ async function getStamperData(_address){
 }
 
 async function getUsers(result,user_type){
-  var count = await carboTag.callFn(user_type+'Count')
+  var count = await cat.callFn(user_type+'Count')
   var rows = []
   /*
     need to make userIndex public so we can call the contract
@@ -93,8 +94,8 @@ async function getUsers(result,user_type){
   */
   var address, user;
   for (i = 0; i < count; i++) {
-    address = await carboTag.callFn(user_type+'Index',i);
-    user = await carboTag.callFn('wallet',address);
+    address = await cat.callFn(user_type+'Index',i);
+    user = await cat.callFn('wallet',address);
     rows[i] = {name: user.name, wallet: address};
   }
   result.render('users/index', { users: rows, user_type: user_type})
@@ -115,7 +116,7 @@ router.get('/stampers',async function (req, res) {
   getUsers(res,'stamper')
 }).get('/search', async function (req, res) {
   const address  = req.query.address
-  data.user = await carboTag.callFn('wallet',address)
+  data.user = await cat.callFn('wallet',address)
   if(data.user){
     data.user.address = address
     data.stamper = await getStamperData(address)
@@ -146,7 +147,7 @@ router.get('/form/:address', function (req, res) {
 // create new user
 router.post('/',async function (req, res) {
   const { name, address } = req.body
-  data.user = await carboTag.callFn('wallet',address)
+  data.user = await cat.callFn('wallet',address)
     
   if(data.user!='0x0000000000000000000000000000000000000000'){
     //when user has been created store address

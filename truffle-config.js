@@ -1,8 +1,9 @@
-
+require('dotenv').config();
 const PrivateKeyProvider = require("@truffle/hdwallet-provider");
 
 // insert the private key of the account used in metamask eg: Account 1 (Miner Coinbase Account)
-const privateKey = "d79d19ddfa996c8058ed3e2f4e4a5551c6773e0afbecf7ce320fec1016e3c449";
+const privateKey = process.env.PRIVATE_KEY;
+const infura_ropsten = process.env.INFURA_ROPSTEN;
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -16,15 +17,22 @@ module.exports = {
     develop: {
       port: 8545
     },
-    cat: {
+    ropsten: {
+      provider: () => new PrivateKeyProvider(privateKey, infura_ropsten),
+      gas: 8000000,           // Gas sent with each transaction (default: ~6700000)
+      gasPrice: 10000000000,  // 20 gwei (in wei) (default: 100 gwei)
+      network_id: 3,
+      timeoutBlocks: 200
+    },
+    local: {
       provider: () => new PrivateKeyProvider(privateKey, "http://localhost:8545"),
       network_id: "*"
     }
   },
-  compilers: {
-    solc: {
-      version: "0.5.12",    // Fetch exact version from solc-bin (default: truffle's version)
-      docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
+  //compilers: {
+  //  solc: {
+  //    version: "0.5.12",    // Fetch exact version from solc-bin (default: truffle's version)
+  //    docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
       // settings: {          // See the solidity docs for advice about optimization and evmVersion
       //  optimizer: {
       //    enabled: false,
@@ -32,8 +40,8 @@ module.exports = {
       //  },
       //  evmVersion: "byzantium"
       // }
-    }
-  }
+  //  }
+  //}
 };
 
 /**
