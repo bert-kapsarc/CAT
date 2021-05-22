@@ -29,7 +29,7 @@ function MetaMask(contract){
         browser = "Connected to Local network"
       }
       else{
-        browser = "Warning: CAT network not detected. Swith Metamask network or deploy CAT contracts on desired network."
+        browser = "Warning: CAT network not detected. Switch Metamask network to Ropsten or deploy CAT contract on desired network."
       }
       
     }else{
