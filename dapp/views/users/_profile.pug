@@ -8,9 +8,9 @@ if data.user.registered
     
     ul
         li Wallet: #{data.user.address}
-        li Carbon: #{data.user.carbon}
-        li Credits (tradeable): #{data.user.gold}
-        li Credits (offset): #{data.user.offsets}
+        li Carbon [kg CO2e]: #{data.user.carbon}
+        li Credits (tradeable) [kg CO2e]: #{data.user.gold}
+        li Credits (offset) [kg CO2e]: #{data.user.offsets}
     if data.stamper
         ul Stamper: #{data.stamper.address}
             li Active: 

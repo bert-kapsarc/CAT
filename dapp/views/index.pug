@@ -14,58 +14,50 @@ block content
     a(href='/users/stampers') Total Stampers: #{stampers}
 
   hr
-  p A decentralized carbon accounting application to track embodied emission from the source though supply chains and across international trade.
+  p A distributed carbon accounting enginge to track embodied emission across energy intense supply chains.
 
   p 
     span 
       b Our Mission: 
-    span realize the concept #[a(href='https://www.kapsarc.org/research/publications/achieving-climate-goals-by-closing-the-loop-in-a-circular-carbon-economy/',target="_blank") Circular Carbon Economy] intiative through transparent carbon accounting and management. Provide an open voluntary platform to esablishin linkage across cabon accounting system, and suport interoperable carbon markets.
+    span support the #[a(href='https://www.kapsarc.org/research/publications/achieving-climate-goals-by-closing-the-loop-in-a-circular-carbon-economy/',target="_blank") Circular Carbon Economy] through carbon emission tracking and management. Provide an open voluntary platform to esablishin linkage across corporate GHG inventories.
+
+  h2 Decarbonized token economy 
+  p A decarbonized token economy uses secure digital contracts. We have deployed a prototype on a public distributed ledger (#[a(href='https://ethereum.org/',target="_blank") Ethereum] Ropsten testnet).
+
+  p To register and submit transactions on the testnet enable your browser with  #[a(href='https://metamask.io/',target="_blank") Metamask], and request funds from a #[a(href='https://faucet.ropsten.be/',target="_blank") Ropsten faucet]
 
   h2 Distributed Carbon Accounting 
-  p The Carbon Accounting Token (CAT) is a #[a(href='https://en.wikipedia.org/wiki/Token_economy',target="_blank") decarbonized token economy]. It operates on an open accounting ledger where anyone can issue and trade carbon tokens, measured in Kilograms (Kg) of carbon dioxide equivalent (CO2e), using a public address secured by there private keys. 
-  p The transfer of tokens represent different forms of GHG inventories, including those covered by the #[a(href='https://ghgprotocol.org/corporate-standard',target="_blank") GHG Protocol ] and other accounting standards.
-  //-
-    ul
-      li <strong>Direct</strong> Leakage of GHG and combustion of hydrocarbon fuels
-      li <strong>Indirect</strong> or realized carbon emissions in products and services (e.g. Scope 1 and Scope 2 emission)
-      li <strong>Retained</strong> carbon stored, used or recyceld into consumer products (e.g. chemicals, plastics)
-  p CAT transactions provide an inventory of the account holders emissions, both direct (scope 1), indirect embodied emission (e.g. scope 2 and upstream scope 3) as weel as unrealized downstream emissions (scope 3). 
-  p Escrow contracts are used to negotiate the exchange of CAT across commerical counterparites.
-  p Their is no explicit price set on these tokens, instead they help stakeholders place a value on carbon and decarbonization activities.
-
-  p CAT transactions provide an inventory of the account holders emissions, both direct (scope 1), indirect embodied emission (e.g. scope 2 and upstream scope 3) as weel as unrealized downstream emissions (scope 3). 
-  p Escrow contracts are used to negotiate the exchange of CAT across commerical counterparites.
-  p Their is no explicit price set on these tokens, instead they help stakeholders place a value on carbon and decarbonization activities.
-
-  p Tokens are typcially issued at the source by hydrocarbon producers, and are voluntarily exchanged as certificates in commercial transactions (post-trade).
+  p The Carbon Accounting Token (CAT) network supports a #[a(href='https://en.wikipedia.org/wiki/Token_economy',target="_blank") decarbonized token economy] using a voluntary accounting ledger. Organizations can issue and transfer carbon tokens, measured in Kilograms (Kg) of carbon dioxide equivalent (CO2e), using a public address. The address is secured with a private key stored securely within Metamask. 
   
-  h3 Carbon Token Contracts
+  p Tokens are issued by organizations and exchanged as part of commercial transactions through emission allocation agreements (escrow contracts).
 
-  p Contracts enable stakeholders to better track carbon as it moves through the economy. 
-  // For example a corporation supplying hyrdocarbon fuels (e.g. coal, oil, natural gas) reports Scope 3 emissions (produced by consumers of their products). The contracts enable the coporation to identify instances where their consumers have actively managed the emissions downstream. 
+  p CAT transactions (inputs/outputs) are used to describe an account holders emission inventories. Transactions are classified differently based on what side the user is on. E.g.  direct scope 1 (input), indirect scope 2 (input), and indirect scope 3 upstream (input) or downstream (output), as defined by the #[a(href='https://ghgprotocol.org/corporate-standard',target="_blank") GHG Protocol ].
 
-  p A decarbonized token economy operates using secure digital contracts currently hosted on a public distributed ledger (#[a(href='https://ethereum.org/',target="_blank") Ethereum] Ropsten testnet). This allows the system to evolve without censorship by a central authority. Tokens can be generated and traded by anyone with a public address.
+  h2 Carbon Token Contracts - the CCE consortium
 
-  p To register and submit transactions on the current prototype (Ethereuem Ropsten testnet) enable your browser to use Ethereum with the #[a(href='https://metamask.io/',target="_blank") Metamask] plugin, and request funds to execute transactions from a #[a(href='https://faucet.ropsten.be/',target="_blank") Ropsten faucet ]
+  p The CCE consortium includes industrial stakeholders that coordinate carbon accounting practices in their transition to a low carbon economy.
 
-  h3 CCE Consortium
-  
-  p The CCE consortium includes industrial stakeholders that see value in coordinating and standardizing carbon accounting practices in their transition to a low carbon economy.
+  p We enable stakeholders to better track carbon as it moves across a supply chain. This information can then be used to produce audited and verified carbon footprint metrics, emission certificate, support the creation of carbon offset credits, that align with carbon pricing mechanisms in the real world.
 
-  h2 Carbon Orgnizational Governance (COG) foundation
+  h3 Carbon Orgnizational Governance (COG) identity foundation
   p The COG foundation is a disitrbuted institution of verified Stampers, or carbon waste managers (e.g. natural resource stewards, active carbon catpure and storage services). The network is based on core governance principles:
     ul
-      li <strong>Identify</strong> potential carbon managers/stamper by nomination 
-      li <strong>Select</strong> offset providers through a democratic voting/oversight protocol
+      li <strong>Identify</strong> Potential carbon managment organziations
+      li <strong>Select</strong> carbon managers through a democratic voting/oversight protocol
       li <strong>Verify</strong> carbon management activities through trusted reporting agencies (reffered to as oracle services)
-      li <strong>Prove</strong> exchange of stamped carbon
-  h3 Carbon offset credit.
+      li <strong>Prove</strong> exchange carbon certificates and offset credits
+  
+  h3 Emission certificates
+  p Emissiion certificate are generated through the verification of emission inventories by recognized carbon auditors registered with the COG foundation. 
+  p The auditing/verification process invovles a private network (e.g. Hyperledger Fabric). Here orgnizations  characterize CAT entries (i.e., input/output transactions) as detailed emission inventories following recongnized reporting standards (e.g., scope 1,2,3). 
+  p A Farbic network supports private data collections that organizations can use to relay senstaive or private data to auditors for verificaiton of their CAT inventories. This keep them separate from other participants in the certification channel.
+
+  h3 Carbon offset credits.
   p Carbon storage units (CSU) are emission offset tokens, representing the removal of cabron from the atmosphere.
   p The minting of CSU is the first step in valuing carbon within the token economy. Minted tokens can:
     ul 
-      li serve as a funding tool for decarbonization efforst (reduce, recycle, resue or remove). 
+      li serve as a funding tool for decarbonization efforst 
       li be traded within existing carbon markets
-      li be used within international climate agreements. E.g. Nationally Determined Contributions (NDCs), Sustainable Development Mechanims (SDM)  
       li support voluntary market mechanisms (Article 6 of Pris)
 
   p Exchange of stamped against unstamped carbon to influence behavior: 
