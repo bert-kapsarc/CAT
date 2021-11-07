@@ -5,10 +5,11 @@ table(style='width:100%', border='1')
     th Gold
     th Issuer
   each tx in data.escrow.transactions
-    div= tx.confirmed
+    //div= tx.confirmed
     tr
       td
         span= tx.multisig_tx_id
+        span= data.escrow.address
         if tx.confirmed 
           span Waiting for counterparty
           form(class='rejectEscrowTx' name='rejectTx'+tx.id)

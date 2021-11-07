@@ -1,12 +1,10 @@
-const CarboTag = artifacts.require("./CarboTag.sol");
+const CAT = artifacts.require("./CAT.sol");
 
-module.exports = async (deployer) => {
-    let accounts = await web3.eth.getAccounts();
-    let instance = await CarboTag.deployed();
-    //send 10 eth to CarboTag contract
+module.exports = async (deployer,network, accounts) => {
+    let instance = await CAT.deployed();
+    //console.log(accounts)
+    //send 10 eth to CAT contract
     //await instance.send(10e18, {from: accounts[9]});
-    for(let i = 0; i < 2; i++){
-        await instance.signUp(i.toString(), {from: accounts[i]})
-        //await instance.addCarbon(1, {from: accounts[i]})
-    }
+    //accounts.forEach(element => await instance.signUp("Owner", {from: element}))
+    await instance.signUp("Owner", {from: accounts[0]});
 };

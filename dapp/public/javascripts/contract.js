@@ -3,7 +3,7 @@
 */
 const Web3 = require('web3');
 //const solc = require('solc');
-const rpcURL = process.env.INFURA_ROPSTEN
+const rpcURL = process.env.NETWORK_URL
 const web3 = new Web3(rpcURL)
 
 // Assigning to exports will not modify module, must use module.exports

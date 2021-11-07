@@ -1,13 +1,17 @@
 pragma solidity ^0.5.12;
-import "./CarboTag.sol";
+import "./CAT.sol";
 
+/// @title Stamper Registry
+/// @author Bertrand Williams-Rioux
+/// @notice Use this to Generate new stamper contracts (offset credit generators).
+/// @dev <docment-me>
 contract Stamper {
 
   attributes public stamper;
 
   struct attributes {
     address owner;
-    address payable parent; // parent address that created this contract (this should be the carboTag contract)
+    address payable parent; // parent address that created this contract (this should be the CAT contract)
     address nominator;
     bool active;   //Is stamper active?
     uint rate; //Rate of stamping speed
@@ -59,7 +63,7 @@ contract Stamper {
     _;
   }
   modifier onlyRegisteredWallets(){
-    (bool _registered) = CarboTag(stamper.parent).registered(msg.sender);
+    (bool _registered) = CAT(stamper.parent).registered(msg.sender);
     require(_registered == true, 'You are not a registered user of the parent accounting contract');
     _;
   }
@@ -68,7 +72,7 @@ contract Stamper {
     _;
   }
   modifier onlyGovernor(){
-    require(CarboTag(stamper.parent).governor(msg.sender), 'Only Governors can do that');
+    require(CAT(stamper.parent).governor(msg.sender), 'Only Governors can do that');
     _;
   }
   modifier notApproved(uint _proposal){
@@ -84,7 +88,7 @@ contract Stamper {
     newGovernorVote(_vote)
   {
     // governor voting
-    if(CarboTag(stamper.parent).governor(msg.sender)){
+    if(CAT(stamper.parent).governor(msg.sender)){
       if(governorVoteIndex[msg.sender] == 0){
         //start tracking votes from index 1. 
         //index 0 is default value for governors that have not yet voted only
@@ -188,7 +192,7 @@ contract Stamper {
 
       uint stamps = (block.timestamp-stamper.last)/stamper.rate;
       stamper.stamps += stamps; 
-      CarboTag(stamper.parent).updateGold(stamps,stamper.owner);
+      CAT(stamper.parent).updateGold(stamps,stamper.owner);
 
   }
 

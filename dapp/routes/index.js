@@ -3,10 +3,10 @@ var router = express.Router();
 
 router.get('/', async function (req, res,) {
     res.render('index', { 
-        carbon: await carboTag.callFn('totalCarbon'),
-        gold: await carboTag.callFn('totalGold'),
-        users: await carboTag.callFn('userCount'),
-        stampers: await carboTag.callFn('stamperCount')
+        carbon: await cat.callFn('totalCarbon'),
+        gold: await cat.callFn('totalGold'),
+        users: await cat.callFn('userCount'),
+        stampers: await cat.callFn('stamperCount')
         //contract: require('../public/javascripts/contract'),
     })
 
