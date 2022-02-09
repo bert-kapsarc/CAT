@@ -1,1 +1,1 @@
-nohup ./besu-21.1.6/bin/besu --data-path=./catnet-data/node-1 --genesis-file=./genesis.json --network-id=31052021 --miner-enabled --miner-coinbase d3ea72b158e6df9b8B7FF6cC1D85e77Aab755c5c --rpc-http-enabled --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-host=0.0.0.0 > /dev/null 2>&1 &
+./besu-21.1.6/bin/besu --data-path=./catnet-data/node-1 --genesis-file=./genesis.json --network-id=10022022 --miner-enabled --miner-coinbase 8efC2983BD5AE44b89ce46d778eE4E677117B0ca --rpc-http-enabled --host-allowlist="*" --rpc-http-cors-origins="all" --rpc-http-host=0.0.0.0
