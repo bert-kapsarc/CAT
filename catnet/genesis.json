@@ -4,15 +4,18 @@
       "ethash": {
         "fixeddifficulty": 1000
       },
-       "chainID": 31052021
+       "chainID": 10022022
    },
   "nonce": "0x42",
   "gasLimit": "0x1000000",
   "difficulty": "0x10000",
   "alloc": {
-    "d3ea72b158e6df9b8B7FF6cC1D85e77Aab755c5c": {
-      "balance": "90000000000000000000000"
+    "8efC2983BD5AE44b89ce46d778eE4E677117B0": {
+      "balance": "45000000000000000000000"
+    },
+    "5040b9673E980b017947fA54Db3df1dA5345ab66": {
+      "balance": "45000000000000000000000"
     }
+
   }
 }
-
